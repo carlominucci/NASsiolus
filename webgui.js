@@ -1,54 +1,49 @@
-const https = require('https');
-const fs = require('fs');
-var port = "8000";
-var os = require('os');
-var express = require("express");
+var express = require('express');
+var fs = require('fs');
+var https = require('https');
 var app = express();
-var path = require('path');
 var bodyParser = require("body-parser");
+var port = "11235";
+var os = require('os');
+var path = require('path');
 
 var interfaces = os.networkInterfaces();
 var addresses = [];
-for (var k in interfaces) {
-    for (var k2 in interfaces[k]) {
-        var address = interfaces[k][k2];
-        if (address.family === 'IPv4' && !address.internal) {
-            addresses.push(address.address);
-        }
-    }
+for(var k in interfaces){
+	for(var k2 in interfaces[k]){
+		var address = interfaces[k][k2];
+		if(address.family === 'IPv4' && !address.internal){
+			addresses.push(address.address);
+		}
+	}
 }
 
-console.log("https://" + addresses + ":" + port + "\n");
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-app.post('/login',function(req,res){
-  var user_name=req.body.user;
-  var password=req.body.password;
-  console.log("User name = "+user_name+", password is "+password);
-  res.end("yes");
+
+app.get('/', function (req, res) {
+	res.set('Content-Type', 'text/html');
+	res.write('<h1>NASsiolus</h1>\n');
+        res.write('<form action="login" method="post">');
+        res.write('<input type="password" name="password" /> password<br />\n');
+        res.write('<button>Login</button>\n');
+        res.write('</form>\n');
+	res.end();
 });
 
-const options = {
-  key: fs.readFileSync('/srv/NASsiolus/privatekey.pem'),
-  cert: fs.readFileSync('/srv/NASsiolus/certificate.pem')
-};
-
-var server = https.createServer(options, (req, res) => {
-	res.statusCode = 200;
-  	res.setHeader('Content-Type', 'text/html');
-
-
-  		res.write('<h1>NASsiolus</h1>\n');
-		res.write('<form action="login" method="post">');
-		res.write('<input type="password" name="password" /> password<br />\n');
-		res.write('<button>Login</button>\n');
-		res.write('</form>\n');
-
-	app.post('/login', function(req, res){
-		res.write("bravo");
-		console.log("bravo");
-	});
-
+app.post('/login', function (req, res){
+	res.set('Content-Type', 'text/html');
+	var password=req.body.password;
+	res.write(password);
 	res.end();
-})
-server.listen(port);
+});
 
+https.createServer({
+  	key: fs.readFileSync('/srv/NASsiolus/privatekey.pem'),
+  	cert: fs.readFileSync('/srv/NASsiolus/certificate.pem')
+
+}, app)
+.listen(port, function () {
+  	console.log("https://" + addresses + ":" + port + "\n");
+});

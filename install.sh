@@ -17,4 +17,6 @@ echo "Installo le dipendenze per nodejs..."
 npm install os
 npm install express
 npm install body-parser
+
 #adduser -s /sbin/nologin -h /dev/null admin 
+#smbpasswd -a admin
