@@ -16,10 +16,12 @@ apk add npm
 
 echo "Installo le dipendenze per nodejs..."
 npm install os
+npm install fs
 npm install express
 npm install body-parser
 npm install crypto
 npm install check-disk-space
+npm install split
 
 #adduser -s /sbin/nologin -h /dev/null admin 
 #smbpasswd -a admin
