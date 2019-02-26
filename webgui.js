@@ -1,5 +1,4 @@
 var express = require('express');
-var session = require('express-session');
 var fs = require('fs');
 var https = require('https');
 var app = express();
@@ -46,7 +45,7 @@ fs.createReadStream("/etc/samba/smb.conf")
 			user=(tmp[1].trim());
 		}
 		if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
-			share=(tmp[0].replace(/[\[\]]/g, ''));	
+			share=(tmp[0].replace(/[\[\]]/g, ''));
 		}
 	});
 
@@ -113,6 +112,7 @@ app.get('/saveshare', function(req, res){
 	res.write('<div class="green">\n');
 	res.write('Salvataggio effettuato.\n');
 	res.write('<form action="/login" method="post">\n');
+  res.write('<input type="hidden" name="password" value"' + response.password + '" />\n"')
 	res.write('<button>Back</button>\n');
 	res.write('</form>\n');
 	res.write('</div>\n');
@@ -150,16 +150,7 @@ app.post('/login', function (req, res){
 	var sha512 = crypto.createHash('sha512').update(password).digest("hex");
 	var contents = fs.readFileSync('./passwd', 'utf8');
 
-
 	if(sha512 == contents){
-		/*app.set('trust proxy', 1);
-		app.use(session({
-			secret: sha512,
-			resave: false,
-			saveUninitialized: true,
-			cookie: { secure: true, maxAge: 60000}
-		}));
-		console.log(req.session.secret);*/
 		res.write('<div class="red">');
 		res.write('<b> ' + os.hostname + ': </b>' + addresses + '<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
@@ -198,4 +189,3 @@ https.createServer({
 .listen(port, function () {
   	console.log("https://" + addresses + ":" + port + "\n");
 });
-
