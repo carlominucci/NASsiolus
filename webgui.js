@@ -49,7 +49,7 @@ fs.createReadStream("/etc/samba/smb.conf")
 	})
 	.on('close', function(err){
 	});
-		console.log("***" + workgroup);
+
 for(var k in interfaces){
 	for(var k2 in interfaces[k]){
 		var address = interfaces[k][k2];
@@ -153,31 +153,22 @@ app.post('/login', function (req, res){
 	}
 	var contents = fs.readFileSync('./passwd', 'utf8');
 
-	console.log(workgroup);
 	if(sha512 == contents){
-		console.log("ooooooo");
     var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
-    var tmp = smbconf.split("\n");
-    console.log(tmp[0]);
-    tmp.forEach(function(item){
-      if(item.trim() == "workgroup"){
+    var line = smbconf.split("\n");
+    for (i = 0; i < line.length; i++) {
+      var tmp = line[i].split("=");
+      if(tmp[0].trim() == "workgroup"){
   			workgroup=(tmp[1].trim());
-        console.log("===" + workgroup);
   		}
-    });
-    /*if(tmp[0].trim() == "workgroup"){
-			workgroup=(tmp[1].trim());
-      console.log("===" + workgroup);
-		}
-		if(tmp[0].trim() == "valid users"){
-			user=(tmp[1].trim());
-		}
-		if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
-			share=(tmp[0].replace(/[\[\]]/g, ''));
-		}*/
+      if(tmp[0].trim() == "valid users"){
+  			user=(tmp[1].trim());
+  		}
+  		if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
+  			share=(tmp[0].replace(/[\[\]]/g, ''));
+  		}
+    }
 
-
-    console.log("---" + workgroup);
 		res.write('<div class="red">');
 		res.write('<b> ' + os.hostname + ': </b>' + addresses + '<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
@@ -205,7 +196,7 @@ app.post('/login', function (req, res){
 	}else{
 		res.write('<div class="red">\n<h1>password errata</h1><br />\n');
 		res.write('<a href="/">Torna al Login</a>\n</div>\n');
-	}
+	}  
 	res.end(footerhtml);
 });
 
