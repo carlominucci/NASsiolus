@@ -156,24 +156,28 @@ app.post('/login', function (req, res){
 	console.log(workgroup);
 	if(sha512 == contents){
 		console.log("ooooooo");
-		fs.createReadStream("/etc/samba/smb.conf")
-			.pipe(split())
-			.on('data', function(line){
-				var tmp = line.split("=");
-				if(tmp[0].trim() == "workgroup"){
-					workgroup=(tmp[1].trim());
-					console.log("!!!" + workgroup);
-				}
-				if(tmp[0].trim() == "valid users"){
-					user=(tmp[1].trim());
-				}
-				if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
-					share=(tmp[0].replace(/[\[\]]/g, ''));
-				}
-			})
-			.on('close', function(err){
-			});
-		console.log("---" + workgroup);
+    var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
+    var tmp = smbconf.split("\n");
+    console.log(tmp[0]);
+    tmp.forEach(function(item){
+      if(item.trim() == "workgroup"){
+  			workgroup=(tmp[1].trim());
+        console.log("===" + workgroup);
+  		}
+    });
+    /*if(tmp[0].trim() == "workgroup"){
+			workgroup=(tmp[1].trim());
+      console.log("===" + workgroup);
+		}
+		if(tmp[0].trim() == "valid users"){
+			user=(tmp[1].trim());
+		}
+		if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
+			share=(tmp[0].replace(/[\[\]]/g, ''));
+		}*/
+
+
+    console.log("---" + workgroup);
 		res.write('<div class="red">');
 		res.write('<b> ' + os.hostname + ': </b>' + addresses + '<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
