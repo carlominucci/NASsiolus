@@ -14,10 +14,12 @@ var split = require('split');
 var exec = require('child_process').exec;
 var freespace = new String();
 var totalspace = new String();
-var workgroupd = new String();
+var workgroup = new String();
 var share = new String();
 var user = new String();
 var sambaconfnew;
+const headerhtml = fs.readFileSync("./header.html");
+const footerhtml = fs.readFileSync("./footer.html");
 
 function poweroff(callback){
 	exec('poweroff', function(error, stdout, stderr){ callback(stdout); });
@@ -31,9 +33,6 @@ checkDiskSpace('/').then((diskSpace) => {
 	totalspace=diskSpace.size;
 });
 
-const headerhtml = fs.readFileSync("./header.html");
-const footerhtml = fs.readFileSync("./footer.html");
-var sambaconf = fs.readFileSync("/etc/samba/smb.conf");
 fs.createReadStream("/etc/samba/smb.conf")
 	.pipe(split())
 	.on('data', function(line){
@@ -47,8 +46,10 @@ fs.createReadStream("/etc/samba/smb.conf")
 		if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
 			share=(tmp[0].replace(/[\[\]]/g, ''));
 		}
+	})
+	.on('close', function(err){
 	});
-
+		console.log("***" + workgroup);
 for(var k in interfaces){
 	for(var k2 in interfaces[k]){
 		var address = interfaces[k][k2];
@@ -60,7 +61,6 @@ for(var k in interfaces){
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
 
 app.get('/', function (req, res) {
 	res.set('Content-Type', 'text/html');
@@ -81,7 +81,7 @@ app.get('/saveshare', function(req, res){
 		workgroup : req.query.workgroup,
 		share : req.query.share,
 		username : req.query.username,
-		pwd : req.query.pwd
+		pwd : req.query.id
 	};
 	sambaconfnew = "[global]\n";
 	sambaconfnew += "workgroup = " + response.workgroup + "\n";
@@ -97,7 +97,6 @@ app.get('/saveshare', function(req, res){
 	sambaconfnew += "writable = yes\n";
 	sambaconfnew += "printable = no\n";
 	sambaconfnew += "create mask = 0765\n";
-	console.log(sambaconfnew);
 	fs.writeFile('/etc/samba/smb.conf', sambaconfnew, function(err){
 		if (err) throw err;
 	});
@@ -112,7 +111,7 @@ app.get('/saveshare', function(req, res){
 	res.write('<div class="green">\n');
 	res.write('Salvataggio effettuato.\n');
 	res.write('<form action="/login" method="post">\n');
-  res.write('<input type="hidden" name="password" value"' + response.password + '" />\n"')
+  res.write('<input type="hidden" name="id" value="' + response.pwd + '" />\n')
 	res.write('<button>Back</button>\n');
 	res.write('</form>\n');
 	res.write('</div>\n');
@@ -146,11 +145,35 @@ app.post('/reboot', function(req, res){
 app.post('/login', function (req, res){
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	var password=req.body.password;
-	var sha512 = crypto.createHash('sha512').update(password).digest("hex");
+	if(!req.body.password){
+		var sha512=req.body.id;
+	}else if(req.body.password){
+		var password=req.body.password;
+		var sha512 = crypto.createHash('sha512').update(password).digest("hex");
+	}
 	var contents = fs.readFileSync('./passwd', 'utf8');
 
+	console.log(workgroup);
 	if(sha512 == contents){
+		console.log("ooooooo");
+		fs.createReadStream("/etc/samba/smb.conf")
+			.pipe(split())
+			.on('data', function(line){
+				var tmp = line.split("=");
+				if(tmp[0].trim() == "workgroup"){
+					workgroup=(tmp[1].trim());
+					console.log("!!!" + workgroup);
+				}
+				if(tmp[0].trim() == "valid users"){
+					user=(tmp[1].trim());
+				}
+				if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
+					share=(tmp[0].replace(/[\[\]]/g, ''));
+				}
+			})
+			.on('close', function(err){
+			});
+		console.log("---" + workgroup);
 		res.write('<div class="red">');
 		res.write('<b> ' + os.hostname + ': </b>' + addresses + '<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
