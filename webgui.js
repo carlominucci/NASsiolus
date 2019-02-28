@@ -22,7 +22,7 @@ const headerhtml = fs.readFileSync("./header.html");
 const footerhtml = fs.readFileSync("./footer.html");
 
 var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
-console.dir(etcpasswd);
+//console.dir(etcpasswd);
 
 function poweroff(callback){
 	exec('poweroff', function(error, stdout, stderr){ callback(stdout); });
@@ -80,53 +80,43 @@ app.get('/', function (req, res) {
 	res.end(footerhtml);
 });
 
+app.get('/saveusername', function(req, res){
+	response = {
+		username: req.query.username,
+		password: req.query.password
+	};
+	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
+  if(etcpasswd.indexOf('NASsiolus user') >= 0){
+		exec('smbpasswd -x ' + response.username);
+		exec('deluser ' + response.username);
+		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
+		exec('smbpasswd -x ' + response.username);
+	}else{
+		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
+		exec('smbpasswd -x ' + response.username);
+ 	}
+});
+
 app.get('/saveshare', function(req, res){
 	response = {
 		workgroup : req.query.workgroup,
 		share : req.query.share,
 		username : req.query.username,
 		id : req.query.id,
-		password : req.query.password,
 		oldusername: req.query.oldusername
 	};
-
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
 	var line = etcpasswd.split("\n");
 	for (i = 0; i < line.length; i++) {
-		var tmp = line[i].split(":");
-		if(tmp[4]){
-			if(tmp[4] == "NASsiolus user"){
-				console.log(tmp[4]);
-				if(tmp[0] == response.oldusername){
-					console.log("1");
-					var username = response.username;
-				}else if(tmp[0] == response.oldusername){
-					var username = response.username;
-					exec('(echo "' + passwrd + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
-					console.log("2");
-				}else if(tmp[0] != response.username && response.username == "root"){
-					var username = response.username;
-					exec('deluser' + tmp[0]);
-					exec('smbpasswd -x ' + tmp[0]);
-					exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + tmp[0]);
-					exec('(echo "' + password + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
-					console.log("3");
-				}
-			}else{
-
-				exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + tmp[0]);
-				exec('(echo "' + password + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
-			}
+		if(line[i].indexOf('NASsiolus user')  >= 0 ){
+			var tmp = line[i].split(":");
+			console.log(tmp[0]);
+			var username = tmp[0];
 		}
 	}
 
-	/*
-	exec('deluser' + tmp[0]);
-	exec('smbpasswd -x ' + tmp[0]);
-	exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + tmp[0]);
-	exec('(echo "' + password + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
-	*/
-console.log(response.username + username + response.oldusername);
 	sambaconfnew = "[global]\n";
 	sambaconfnew += "workgroup = " + response.workgroup + "\n";
 	sambaconfnew += "server string = " + os.hostname + " " + response.share + " - NASsiolus\n";
@@ -214,6 +204,7 @@ app.post('/login', function (req, res){
     }
 
 		res.write('<button class="tablink" onclick="openPage(\'Info\', this, \'#0e0\')" id="defaultOpen">Info</button>\n');
+    res.write('<button class="tablink" onclick="openPage(\'Account\', this, \'#ee0\')">Account</button>\n');
 		res.write('<button class="tablink" onclick="openPage(\'Share\', this, \'#e00\')">Share</button>\n');
 		res.write('<button class="tablink" onclick="openPage(\'System\', this, \'#00e\')">System</button>\n');
 		res.write('<div id="Info" class="tabcontent">');
@@ -223,14 +214,19 @@ app.post('/login', function (req, res){
 		res.write('<b>Memory: </b>' + os.totalmem/1024 + 'Mb total / ' + os.freemem/1024 + 'Mb free<br />\n');
 		res.write('<b>Disk Usage: </b>' + totalspace/1024 + 'Mb total / ' + freespace/1024 + 'Mb free<br />\n');
 		res.write('</div>\n');
+    		res.write('<div id="Account" class="tabcontent">\n');
+    		res.write('<form action="saveusername" method="get"><br />\n');
+    		res.write('<input type="text" name="username" />Username<br />\n');
+    		res.write('<input type="password" name="password" />Password<br />\n');
+    		res.write('<input class="bottone" type="submit" value="Save" />\n');
+    		res.write('</form>\n');
+    		res.write('</div>\n');
 		res.write('<div id="Share" class="tabcontent">\n');
 		res.write('<form action="saveshare" method="get">\n');
 		res.write('<input type="text" name="workgroup" value="' + workgroup + '" /> WorkGroup<br />\n');
 		res.write('<input type="text" name="share" value="' + share + '" /> Share<br />\n');
 		res.write('<input type="hidden" name="id" value="' + sha512 + '" />\n');
 		res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
-		res.write('<input type="text" name="username" value="' + user +'" /> Username<br />\n');
-		res.write('<input type="password" name="pwd" /> Password<br />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
 		res.write('</form>\n</div>\n');
 		res.write('<div id="System" class="tabcontent">');
