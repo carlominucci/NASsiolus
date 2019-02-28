@@ -87,11 +87,11 @@ app.get('/saveusername', function(req, res){
 	};
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   if(etcpasswd.indexOf('NASsiolus user') >= 0){
-		exec('smbpasswd -x ' + response.username);
+		/*exec('smbpasswd -x ' + response.username);
 		exec('deluser ' + response.username);
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-		exec('smbpasswd -x ' + response.username);
+		exec('smbpasswd -x ' + response.username);*/
 	}else{
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
