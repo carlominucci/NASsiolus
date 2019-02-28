@@ -3,6 +3,7 @@
 	<head>
 		<title>NASsiolus</title>
 <style>
+  * {box-sizing: border-box}
 	body{
 		background-color: #fff;
 		color: black;
@@ -26,7 +27,8 @@
 		margin: 0.5vw;
 		padding: 0.5vw;
 	}
-	button{
+
+	.bottone{
 		background-color: #ddd;
 		font-size: 2vw;
 		font-family: Monaco;
@@ -34,30 +36,53 @@
 		padding: 0.5vw;
 		margin: 0.5vw;
 	}
-	.green{
+	#Info{
 		border: none;
-		border-top: 5px solid #0e0;
+		border-left: 5px solid #0e0;
 		margin: 0;
 		padding: 0.5vw;
 		font-size: 2vw
 	}
-	.red{
+	#Share{
 		border: none;
-		border-top: 5px solid #e00;
-		margin: 0.5vm;
+		border-left: 5px solid #e00;
+		margin: 0;
 		padding: 0.5vw;
 		font-size: 2vw;
 	}
-	.blu{
+	#System{
 		border: none;
-		border-top: 5px solid #00e;
-		margin: 0.5vw;
+		border-left: 5px solid #00e;
+		margin: 0;
 		padding: 0.5vw;
 		font-size: 2vw;
 	}
+  .tablink {
+    background-color: #888;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+		font-family: Monaco;
+    font-size: 2vw;
+    width: 33%;
+  }
+
+  .tablink:hover {
+    background-color: #999;
+  }
+
+  .tabcontent {
+    display: none;
+    padding: 100px 20px;
+    height: 100%;
+  }
+
 	.footer{
 
 	}
 
 </style>
+
 <body>

@@ -21,6 +21,9 @@ var sambaconfnew;
 const headerhtml = fs.readFileSync("./header.html");
 const footerhtml = fs.readFileSync("./footer.html");
 
+var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
+console.dir(etcpasswd);
+
 function poweroff(callback){
 	exec('poweroff', function(error, stdout, stderr){ callback(stdout); });
 }
@@ -65,14 +68,15 @@ app.use(bodyParser.json());
 app.get('/', function (req, res) {
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	res.write('<div class="green">\n');
+	res.write('<div id="Info">\n');
 	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1>\n');
         res.write('<form action="login" method="post">');
         res.write('<input type="password" name="password" />\n');
-        res.write('<button>Login</button>\n');
+        res.write('<button class="bottone">Login</button>\n');
         res.write('</form>\n</div>\n');
-	res.write('<div class="red">\n');
+	res.write('<div id="Info">\n');
 	res.write('smb://' + addresses + '/' + share);
+	res.write('</div>\n');
 	res.end(footerhtml);
 });
 
@@ -81,8 +85,48 @@ app.get('/saveshare', function(req, res){
 		workgroup : req.query.workgroup,
 		share : req.query.share,
 		username : req.query.username,
-		pwd : req.query.id
+		id : req.query.id,
+		password : req.query.password,
+		oldusername: req.query.oldusername
 	};
+
+	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
+	var line = etcpasswd.split("\n");
+	for (i = 0; i < line.length; i++) {
+		var tmp = line[i].split(":");
+		if(tmp[4]){
+			if(tmp[4] == "NASsiolus user"){
+				console.log(tmp[4]);
+				if(tmp[0] == response.oldusername){
+					console.log("1");
+					var username = response.username;
+				}else if(tmp[0] == response.oldusername){
+					var username = response.username;
+					exec('(echo "' + passwrd + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
+					console.log("2");
+				}else if(tmp[0] != response.username && response.username == "root"){
+					var username = response.username;
+					exec('deluser' + tmp[0]);
+					exec('smbpasswd -x ' + tmp[0]);
+					exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + tmp[0]);
+					exec('(echo "' + password + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
+					console.log("3");
+				}
+			}else{
+
+				exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + tmp[0]);
+				exec('(echo "' + password + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
+			}
+		}
+	}
+
+	/*
+	exec('deluser' + tmp[0]);
+	exec('smbpasswd -x ' + tmp[0]);
+	exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + tmp[0]);
+	exec('(echo "' + password + '"; echo "ciao") | smbpasswd -a ' + tmp[0]);
+	*/
+console.log(response.username + username + response.oldusername);
 	sambaconfnew = "[global]\n";
 	sambaconfnew += "workgroup = " + response.workgroup + "\n";
 	sambaconfnew += "server string = " + os.hostname + " " + response.share + " - NASsiolus\n";
@@ -92,7 +136,7 @@ app.get('/saveshare', function(req, res){
 	sambaconfnew += "[" + response.share + "]\n";
 	sambaconfnew += "comment = " + response.share + " share\n";
 	sambaconfnew += "path = /srv/NASsiolus_share\n";
-	sambaconfnew += "valid users = " + response.username + "\n";
+	sambaconfnew += "valid users = " + username + "\n";
 	sambaconfnew += "public = no\n";
 	sambaconfnew += "writable = yes\n";
 	sambaconfnew += "printable = no\n";
@@ -108,11 +152,11 @@ app.get('/saveshare', function(req, res){
 
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	res.write('<div class="green">\n');
+	res.write('<div class="Share">\n');
 	res.write('Salvataggio effettuato.\n');
 	res.write('<form action="/login" method="post">\n');
-  res.write('<input type="hidden" name="id" value="' + response.pwd + '" />\n')
-	res.write('<button>Back</button>\n');
+  res.write('<input type="hidden" name="id" value="' + response.id + '" />\n')
+	res.write('<button class="bottone" >Back</button>\n');
 	res.write('</form>\n');
 	res.write('</div>\n');
 	res.end(footerhtml);
@@ -121,7 +165,7 @@ app.get('/saveshare', function(req, res){
 app.post('/poweroff', function(req, res){
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	res.write('<div class="red">\n');
+	res.write('<div class="System">\n');
 	res.write('Poweroff in progress...\n');
 	res.write('</div>\n');
 	res.end(footerhtml);
@@ -133,7 +177,7 @@ app.post('/poweroff', function(req, res){
 app.post('/reboot', function(req, res){
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	res.write('<div class="red">\n');
+	res.write('<div class="System">\n');
 	res.write('Reboot in progress...\n');
 	res.write('</div>\n');
 	res.end(footerhtml);
@@ -169,34 +213,38 @@ app.post('/login', function (req, res){
   		}
     }
 
-		res.write('<div class="red">');
+		res.write('<button class="tablink" onclick="openPage(\'Info\', this, \'#0e0\')" id="defaultOpen">Info</button>\n');
+		res.write('<button class="tablink" onclick="openPage(\'Share\', this, \'#e00\')">Share</button>\n');
+		res.write('<button class="tablink" onclick="openPage(\'System\', this, \'#00e\')">System</button>\n');
+		res.write('<div id="Info" class="tabcontent">');
 		res.write('<b> ' + os.hostname + ': </b>' + addresses + '<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
 		res.write('<b>Uptime: </b>' + os.uptime() + ' s<br />\n');
 		res.write('<b>Memory: </b>' + os.totalmem/1024 + 'Mb total / ' + os.freemem/1024 + 'Mb free<br />\n');
 		res.write('<b>Disk Usage: </b>' + totalspace/1024 + 'Mb total / ' + freespace/1024 + 'Mb free<br />\n');
 		res.write('</div>\n');
-		res.write('<div class="green">\n');
+		res.write('<div id="Share" class="tabcontent">\n');
 		res.write('<form action="saveshare" method="get">\n');
 		res.write('<input type="text" name="workgroup" value="' + workgroup + '" /> WorkGroup<br />\n');
 		res.write('<input type="text" name="share" value="' + share + '" /> Share<br />\n');
-		res.write('<input type="text" name="username" value="' + user + '" /> Username<br />\n');
-		res.write('<input type="password" name="pwd" /> Password<br />\n');
 		res.write('<input type="hidden" name="id" value="' + sha512 + '" />\n');
-		res.write('<input type="submit" value="Save" />\n');
+		res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
+		res.write('<input type="text" name="username" value="' + user +'" /> Username<br />\n');
+		res.write('<input type="password" name="pwd" /> Password<br />\n');
+		res.write('<input class="bottone" type="submit" value="Save" />\n');
 		res.write('</form>\n</div>\n');
-		res.write('<div class="blu">');
+		res.write('<div id="System" class="tabcontent">');
 		res.write('<form action="poweroff" method="post">\n');
-		res.write('<button>PowerOff</button>\n');
+		res.write('<button class="bottone">PowerOff</button>\n');
 		res.write('</form>\n');
 		res.write('<form action="reboot" method="post">\n');
-		res.write('<button>Reboot</button>\n');
+		res.write('<button class="bottone">Reboot</button>\n');
 		res.write('</form>\n');
 		res.write('</div>\n');
 	}else{
 		res.write('<div class="red">\n<h1>password errata</h1><br />\n');
 		res.write('<a href="/">Torna al Login</a>\n</div>\n');
-	}  
+	}
 	res.end(footerhtml);
 });
 

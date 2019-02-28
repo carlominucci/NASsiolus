@@ -19,8 +19,8 @@ mkdir /srv/NASsiolus_share/
 
 echo
 echo "Installo i pacchetti necessari..."
-echo 
-apk add samba 
+echo
+apk add samba
 apk add nodejs
 apk add npm
 
@@ -37,7 +37,7 @@ npm install child_process
 npm install express-session
 echo
 
-#adduser -s /sbin/nologin -h /dev/null admin 
+#adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" admin 
 #smbpasswd -a admin
 
 echo
@@ -49,4 +49,4 @@ echo -e "\nWelcome to NASSiolus, powered by Alpine!\n"> /etc/motd
 echo -e "See <https://github.com/carlominucci/NASsiolus>\n" >> /etc/motd
 echo -n "Open " >> /etc/motd
 ip address show | grep inet | grep -v inet6 | grep -v 127 | awk {'print "https:", $2'} | sed -e 's/ /\/\//' | sed -e 's/\/24/:11235/' >> /etc/motd
-echo -e "\n" >> /etc/motd 
+echo -e "\n" >> /etc/motd
