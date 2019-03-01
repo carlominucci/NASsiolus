@@ -1,0 +1,18 @@
+#!/sbin/openrc-run
+
+extra_started_commands="reload"
+
+start() {
+	cd /srv/NASsiolus
+	node ./webgui.js &
+}
+
+stop() {
+	killall node
+}
+
+reload() {
+	killall node
+	node /srv/NASsiolus/webgui.js &
+}
+
