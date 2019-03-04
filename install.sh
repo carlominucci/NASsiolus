@@ -46,6 +46,7 @@ npm install check-disk-space
 npm install split
 npm install child_process
 npm install express-session
+npm install network-config
 echo
 
 echo
@@ -55,7 +56,7 @@ echo
 
 echo -e "\nWelcome to NASSiolus, powered by Alpine!\n"> /etc/motd
 echo -e "See <https://github.com/carlominucci/NASsiolus>\n" >> /etc/motd
-echo -n "Open " >> /etc/motd
+echo -e "Open https://<IP.ADDRESS>:11235/ in your browser." >> /etc/motd
 #ip address show | grep inet | grep -v inet6 | grep -v 127 | awk {'print "https:", $2'} | sed -e 's/ /\/\//' | sed -e 's/\/24/:11235/' >> /etc/motd
 echo -e "\n" >> /etc/motd
 
