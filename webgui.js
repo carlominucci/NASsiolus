@@ -48,6 +48,7 @@ function networkdata(callback){
 		ip = interfaces[0].ip;
 		netmask = interfaces[0].netmask;
 		gateway = interfaces[0].gateway;
+    console.dir(interfaces);
   });
 }
 
@@ -94,7 +95,9 @@ app.get('/saveusername', function(req, res){
 		password: req.query.password
 	};
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
+  console.log(etcpasswd.indexOf('NASsiolus user'));
   if(etcpasswd.indexOf('NASsiolus user') >= 0){
+    console.log(">0");
     var line = etcpasswd.split("\n");
     for (i = 0; i < line.length; i++) {
       if(line[i].indexOf('NASsiolus user')  >= 0 ){
@@ -106,11 +109,13 @@ app.get('/saveusername', function(req, res){
     }
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
+    exec('chwon -R ' + response.username + ' /srv/NASsiolus');
 	}else if(etcpasswd.indexOf('NASsiolus user') < 0){
+    console.log("<0");
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
     exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-
+    exec('chwon -R ' + response.username + ' /srv/NASsiolus');
  	}
   res.set('Content-Type', 'text/html');
 	res.write(writesaved);
@@ -130,7 +135,6 @@ app.get('/changepwd', function(req, res){
 });
 
 app.get('/saveshare', function(req, res){
-
 	response = {
 		workgroup : req.query.workgroup,
 		share : req.query.share,
@@ -211,12 +215,7 @@ app.post('/admin', function (req, res, next){
   sess = req.session;
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	/*if(!req.body.password){
-		var sha512=req.body.id;
-    sess.id = sha512;*/
-  /*if(sess.id){
 
-  }*/
 	if(req.body.password){
 		var password=req.body.password;
 		var sha512 = crypto.createHash('sha512').update(password).digest("hex");
@@ -254,6 +253,7 @@ app.post('/admin', function (req, res, next){
   		if(line[i].indexOf('NASsiolus user')  >= 0 ){
   			var tmp = line[i].split(":");
   			var username = tmp[0];
+        console.log('----' + username);
   		}
   	}
 
