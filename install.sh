@@ -11,6 +11,15 @@ openssl x509 -req -in /srv/NASsiolus/certrequest.csr -signkey /srv/NASsiolus/pri
 
 echo
 echo "************************************"
+echo "* Install require package...       *"
+echo "************************************"
+echo
+apk add samba
+apk add nodejs
+apk add npm
+
+echo
+echo "************************************"
 echo "* Installing files of NASSiolus... *"
 echo "************************************"
 echo
@@ -22,15 +31,7 @@ cp -rv node_modules /srv/NASsiolus/
 cp -v /etc/samba/smb.conf /etc/samba/smb.conf.orig
 mkdir /srv/NASsiolus_share/
 cp -v NASSiolus /etc/init.d/
-
-echo
-echo "************************************"
-echo "* Install require package...       *"
-echo "************************************"
-echo
-apk add samba
-apk add nodejs
-apk add npm
+service NASsiolus start
 
 echo
 echo "************************************"
@@ -56,7 +57,7 @@ echo
 
 echo -e "\nWelcome to NASSiolus, powered by Alpine!\n"> /etc/motd
 echo -e "See <https://github.com/carlominucci/NASsiolus>\n" >> /etc/motd
-echo -e "Open https://<IP.ADDRESS>:11235/ in your browser." >> /etc/motd
+echo -e "Open https://<YOUR.IP.ADDRESS>:11235/ in your browser." >> /etc/motd
 #ip address show | grep inet | grep -v inet6 | grep -v 127 | awk {'print "https:", $2'} | sed -e 's/ /\/\//' | sed -e 's/\/24/:11235/' >> /etc/motd
 echo -e "\n" >> /etc/motd
 

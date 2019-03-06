@@ -8,8 +8,6 @@ var port = "11235";
 var network = require('network-config');
 var os = require('os');
 var path = require('path');
-var interfaces = os.networkInterfaces();
-var addresses = [];
 var crypto = require('crypto');
 var checkDiskSpace = require('check-disk-space');
 var split = require('split');
@@ -23,10 +21,15 @@ var sambaconfnew;
 var ip;
 var netmask;
 var gateway;
-var session;
+var sess;
+app.use(session({
+    secret: '2C44-4D44-WppQ38S',
+    resave: true,
+    saveUninitialized: true
+}));
 const headerhtml = fs.readFileSync("./header.html");
 const footerhtml = fs.readFileSync("./footer.html");
-
+var writesaved = headerhtml + '<div class="action">\n' + 'Saved.\n' + '<form action="/admin" method="post">\n' + '<button class="bottone" >Back</button>\n' + '</form>\n' + '</div>\n' + footerhtml;
 
 function poweroff(callback){
 	exec('poweroff', function(error, stdout, stderr){ callback(stdout); });
@@ -75,10 +78,10 @@ app.get('/', function (req, res) {
 	res.write(headerhtml);
 	res.write('<div id="Info">\n');
 	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1>\n');
-        res.write('<form action="login" method="post">');
-        res.write('<input type="password" name="password" />\n');
-        res.write('<button class="bottone">Login</button>\n');
-        res.write('</form>\n</div>\n');
+  res.write('<form action="admin" method="post">');
+  res.write('<input type="password" name="password" />\n');
+  res.write('<button class="bottone">Login</button>\n');
+  res.write('</form>\n</div>\n');
 	res.write('<div id="Info">\n');
 	//res.write('smb://' + ip + '/' + share);
 	res.write('</div>\n');
@@ -92,28 +95,42 @@ app.get('/saveusername', function(req, res){
 	};
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   if(etcpasswd.indexOf('NASsiolus user') >= 0){
-		/*exec('smbpasswd -x ' + response.username);
-		exec('deluser ' + response.username);
+    var line = etcpasswd.split("\n");
+    for (i = 0; i < line.length; i++) {
+      if(line[i].indexOf('NASsiolus user')  >= 0 ){
+        var tmp = line[i].split(":");
+        var username = tmp[0];
+        exec('smbpasswd -x ' + tmp[0]);
+        exec('deluser ' + tmp[0]);
+      }
+    }
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-		exec('smbpasswd -x ' + response.username);*/
-	}else{
+	}else if(etcpasswd.indexOf('NASsiolus user') < 0){
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
-    echo('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
+    exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-		//exec('smbpasswd -x ' + response.username);
+
  	}
+  res.set('Content-Type', 'text/html');
+	res.write(writesaved);
+  res.end();
 });
 
 app.get('/changepwd', function(req, res){
-	//res.set('Content-Type', 'text/html');
-	//res.write(headerhtml);
-	console.log(req.query.oldpassword + req.query.newpassword);
-	//res.write("ciao");
-	//res.end(footerhtml);
+  var contents = fs.readFileSync('./passwd', 'utf8');
+  console.log(contents + req.query.oldpassword + req.query.newpassword);
+  if(contents == crypto.createHash('sha512').update(req.query.oldpassword).digest("hex")){
+    fs.writeFile('passwd', crypto.createHash('sha512').update(req.query.newpassword).digest("hex") , function(err){
+  		if (err) throw err;
+  	});
+    res.write(writesaved);
+    res.end;
+  }
 });
 
 app.get('/saveshare', function(req, res){
+
 	response = {
 		workgroup : req.query.workgroup,
 		share : req.query.share,
@@ -122,7 +139,7 @@ app.get('/saveshare', function(req, res){
 		oldusername: req.query.oldusername
 	};
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
-	var line = etcpasswd.split("\n");
+	var line = etcpasswd.split("\n");var contents = fs.readFileSync('./passwd', 'utf8');
 	for (i = 0; i < line.length; i++) {
 		if(line[i].indexOf('NASsiolus user')  >= 0 ){
 			var tmp = line[i].split(":");
@@ -138,31 +155,25 @@ app.get('/saveshare', function(req, res){
 	sambaconfnew += "max log size = 50\n";
 	sambaconfnew += "[" + response.share + "]\n";
 	sambaconfnew += "comment = " + response.share + " share\n";
-	sambaconfnew += "path = /srv/NASsiolus_share\n";ogin
+	sambaconfnew += "path = /srv/NASsiolus_share\n";
 	sambaconfnew += "valid users = " + username + "\n";
-	sambaconfnew += "public = no\n";
+	sambaconfnew += "public = yes\n";
 	sambaconfnew += "writable = yes\n";
 	sambaconfnew += "printable = no\n";
 	sambaconfnew += "create mask = 0777\n";
 	fs.writeFile('/etc/samba/smb.conf', sambaconfnew, function(err){
 		if (err) throw err;
 	});
-	exec("service samba restart");		console.log(interfaces[0].name);
+	exec("service samba restart");
+
 	fs.writeFile('/etc/hostname', response.workgroup, function(err){
 		if (err) throw err;
 	});
 	exec("hostname -F /etc/hostname");
 
 	res.set('Content-Type', 'text/html');
-	res.write(headerhtml);
-	res.write('<div class="action">\n');
-	res.write('Salvataggio effettuato.\n');
-	res.write('<form action="/login" method="post">\n');
-  res.write('<input type="hidden" name="id" value="' + response.id + '" />\n')
-	res.write('<button class="bottone" >Back</button>\n');
-	res.write('</form>\n');
-	res.write('</div>\n');
-	res.end(footerhtml);
+	res.write(writesaved);
+  res.end();
 });
 
 app.post('/poweroff', function(req, res){
@@ -182,7 +193,6 @@ app.post('/reboot', function(req, res){
 	res.write(headerhtml);
 	res.write('<div class="System">\n');
 	res.write('Reboot in progress...\n');
-	res.write(req.session.id);
 	res.write('</div>\n');
 	res.end(footerhtml);
 	reboot(function(output){
@@ -190,31 +200,38 @@ app.post('/reboot', function(req, res){
 	});
 });
 
-app.post('/login', function (req, res, next){
+app.post('/logout', function (req, res) {
+  req.session.destroy(function (err) {
+  if (err) return next(err)
+  res.redirect('/')
+})
+});
+
+app.post('/admin', function (req, res, next){
+  sess = req.session;
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	if(!req.body.password){
+	/*if(!req.body.password){
 		var sha512=req.body.id;
-	}else if(req.body.password){
+    sess.id = sha512;*/
+  /*if(sess.id){
+
+  }*/
+	if(req.body.password){
 		var password=req.body.password;
 		var sha512 = crypto.createHash('sha512').update(password).digest("hex");
+    var contents = fs.readFileSync('./passwd', 'utf8');
+    if(sha512 == contents){
+      sess = req.session;
+      sess.login=true;
+    }else{
+      sess.login=false;
+    }
 	}
-	var contents = fs.readFileSync('./passwd', 'utf8');
 
-	if(sha512 == contents){
-		app.use(session({
-  		secret: sha512,
-  		resave: false,
-  		saveUninitialized: true
-		}))
-		session = req.session;
-
-		session.id = sha512;
-		console.log(session.id);
-
+	if(sess.login == true){
     sambaitem();
 		networkdata();
-		//console.log(gateway);
 
 		res.write('<button class="tablink" onclick="openPage(\'Info\', this, \'#ddd\')" id="defaultOpen">Info</button>\n');
     res.write('<button class="tablink" onclick="openPage(\'Account\', this, \'#ddd\')">Account</button>\n');
@@ -252,7 +269,6 @@ app.post('/login', function (req, res, next){
 		res.write('<form action="saveshare" method="get">\n');
 		res.write('<input type="text" name="workgroup" value="' + workgroup + '" /> WorkGroup<br />\n');
 		res.write('<input type="text" name="share" value="' + share + '" /> Share<br />\n');
-		res.write('<input type="hidden" name="id" value="' + sha512 + '" />\n');
 		res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
 		res.write('</form>\n</div>\n');
@@ -271,6 +287,10 @@ app.post('/login', function (req, res, next){
 		res.write('<button class="bottone">Save</button><br />\n');
 		res.write('</form><hr />\n');
 
+    res.write('<form action="logout" method="post">\n');
+		res.write('<button class="bottone">Logout</button>\n');
+		res.write('</form>\n');
+
 		res.write('<form action="poweroff" method="post">\n');
 		res.write('<button class="bottone">PowerOff</button>\n');
 		res.write('</form>\n');
@@ -279,7 +299,8 @@ app.post('/login', function (req, res, next){
 		res.write('<button class="bottone">Reboot</button>\n');
 		res.write('</form>\n');
 		res.write('</div>\n');
-	}else{
+	}else if(!sess.login == true){
+
 		res.write('<div class="red">\n<h1>password errata</h1><br />\n');
 		res.write('<a href="/">Torna al Login</a>\n</div>\n');
 	}
@@ -291,6 +312,5 @@ https.createServer({
   	cert: fs.readFileSync('/srv/NASsiolus/certificate.pem')
 }, app)
 .listen(port, function () {
-
   	console.log("https://" + ip + ":" + port + "\n");
 });
