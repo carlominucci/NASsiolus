@@ -4,7 +4,6 @@ var fs = require('fs');
 var https = require('https');
 var app = express();
 var bodyParser = require("body-parser");
-var port = "11235";
 var network = require('network-config');
 var os = require('os');
 var path = require('path');
@@ -12,6 +11,8 @@ var crypto = require('crypto');
 var checkDiskSpace = require('check-disk-space');
 var split = require('split');
 var exec = require('child_process').exec;
+
+var port = "11235";
 var freespace = new String();
 var totalspace = new String();
 var workgroup = new String();
@@ -22,11 +23,13 @@ var ip;
 var netmask;
 var gateway;
 var sess;
+
 app.use(session({
     secret: '2C44-4D44-WppQ38S',
     resave: true,
     saveUninitialized: true
 }));
+
 const headerhtml = fs.readFileSync("./header.html");
 const footerhtml = fs.readFileSync("./footer.html");
 var writesaved = headerhtml + '<div class="action">\n' + 'Saved.\n' + '<form action="/admin" method="post">\n' + '<button class="bottone" >Back</button>\n' + '</form>\n' + '</div>\n' + footerhtml;
@@ -51,6 +54,14 @@ function networkdata(callback){
   });
 }
 
+network.interfaces(function(err, interfaces){
+  ip = interfaces[0].ip;
+  netmask = interfaces[0].netmask;
+  gateway = interfaces[0].gateway;
+  console.log('https://' + ip + ':11235');
+});
+//console.log(ip);
+
 function sambaitem(callback){
   var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
   var line = smbconf.split("\n");
@@ -73,7 +84,7 @@ app.use(bodyParser.json());
 
 app.get('/', function (req, res) {
   sambaitem();
-	networkdata();
+	//networkdata();
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
 	res.write('<div id="Info">\n');
@@ -88,11 +99,12 @@ app.get('/', function (req, res) {
 	res.end(footerhtml);
 });
 
-app.get('/saveusername', function(req, res){
+app.get('/newusername', function(req, res){
 	response = {
 		username: req.query.username,
 		password: req.query.password
 	};
+
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   if(etcpasswd.indexOf('NASsiolus user') >= 0){
     var line = etcpasswd.split("\n");
@@ -113,6 +125,17 @@ app.get('/saveusername', function(req, res){
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
     exec('chwon -R ' + response.username + ' /srv/NASsiolus');
  	}
+  var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
+  var smbcontfmp;
+  var line = smbconf.split("\n");
+  for (i = 0; i < line.length; i++) {
+    if(line[i].indexOf('valid users') >= 0){
+        smbcontfmp += 'valid users = ' + response.username + '\n';
+    }else{
+        smbcontfmp += line[i] + '\n';
+    }
+  }
+
   res.set('Content-Type', 'text/html');
 	res.write(writesaved);
   res.end();
@@ -153,7 +176,7 @@ app.get('/saveshare', function(req, res){
 	sambaconfnew += "log file = /usr/local/samba/var/log.%m\n";
 	sambaconfnew += "max log size = 50\n";
 	sambaconfnew += "[" + response.share + "]\n";
-	sambaconfnew += "comment = " + response.share + " share\n";
+	sambaconfnew += "comment = " + response.share + " share\n";ciao
 	sambaconfnew += "path = /srv/NASsiolus_share\n";
 	sambaconfnew += "valid users = " + username + "\n";
 	sambaconfnew += "public = yes\n";
@@ -202,8 +225,26 @@ app.post('/reboot', function(req, res){
 app.post('/logout', function (req, res) {
   req.session.destroy(function (err) {
   if (err) return next(err)
-  res.redirect('/')
+    res.redirect('/')
+  })
+});
+
+app.post('/changeip', function (req,res){
+  console.log(req.body.ip);
+  console.log(req.body.netmask);
+  console.log(req.body.gateway);
+  network.configure('eth0', {
+    ip: req.body.ip,
+    netmask: req.body.netmask,
+    gateway: req.body.gateway,
+    restart: true
+}, function(err){
+
 })
+  res.redirect('https://' + req.body.ip + ':11235');
+  /*res.set('Content-Type', 'text/html');
+	res.write(writesaved);
+  res.end();*/
 });
 
 app.post('/admin', function (req, res, next){
@@ -233,7 +274,13 @@ app.post('/admin', function (req, res, next){
 		res.write('<button class="tablink" onclick="openPage(\'System\', this, \'#ddd\')">System</button>\n');
 
 		res.write('<div id="Info" class="tabcontent">');
-		res.write('<b> ' + os.hostname + ': </b>' + ip + '<br />\n');
+		res.write('<b> ' + os.hostname + ': </b>');
+    if(!ip){
+      res.write('<i>Press Refresh button</i>');
+    }else if (ip){
+      res.write(ip);
+    }
+    res.write('<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
     var hours = Math.floor(os.uptime() / (60*60));
     var minutes = Math.floor(os.uptime() % (60*60) / 60);
@@ -245,10 +292,17 @@ app.post('/admin', function (req, res, next){
     var percentdisk = freespace * 100 / totalspace;
 		res.write('<b>Disk Usage: </b>' + parseInt(((totalspace/1024)/1024)/1024) + 'Gb total / ' + parseInt(((freespace/1024)/1024)/1024) + 'Gb free - ' + parseInt(percentdisk) + '% free.\n');
     res.write('<canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasdisk");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);</script><br >\n');
-    res.write('<b>Share: </b>smb://' + ip + '/' + share + '\n');
+    res.write('<b>Share: </b>');
+    if(!ip){
+      res.write('<i>Press Refresh button</i>');
+    }else if (ip){
+      res.write('smb://');
+      res.write(ip);
+      res.write('/' + share + '\n');
+    }
     res.write('<form method="post" action="/admin">\n');
     res.write('<button class="bottone">Refresh</button>\n');
-		res.write('</div>\n');
+		res.write('</form></div>\n');
 
     var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   	var line = etcpasswd.split("\n");
@@ -260,7 +314,8 @@ app.post('/admin', function (req, res, next){
   	}
 
 		res.write('<div id="Account" class="tabcontent">\n');
-		res.write('<form action="saveusername" method="get"><br />\n');
+    res.write('Change login parameters.\n')
+		res.write('<form action="newusername" method="get"><br />\n');
 		res.write('<input type="text" name="username" value="' + username + '" />Username<br />\n');
 		res.write('<input type="password" name="password" />Password<br />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
@@ -268,6 +323,7 @@ app.post('/admin', function (req, res, next){
 		res.write('</div>\n');
 
 		res.write('<div id="Share" class="tabcontent">\n');
+    res.write('Change <i>WorkGroup</i> and <i>Share</i> information.\n')
 		res.write('<form action="saveshare" method="get">\n');
 		res.write('<input type="text" name="workgroup" value="' + workgroup + '" /> WorkGroup<br />\n');
 		res.write('<input type="text" name="share" value="' + share + '" /> Share<br />\n');
@@ -276,6 +332,7 @@ app.post('/admin', function (req, res, next){
 		res.write('</form>\n</div>\n');
 
 		res.write('<div id="System" class="tabcontent">\n');
+    res.write('Change <i>webgui</i> password.\n')
     res.write('<form action="changepwd" method="get" >\n');
     res.write('<input type="password" name="oldpassword" />Old Password<br />\n');
     res.write('<input type="password" name="newpassword" />New Password<br />\n');
@@ -283,11 +340,12 @@ app.post('/admin', function (req, res, next){
     res.write('</form>\n');
     res.write('<hr />\n');
 
+    /*res.write('<form action="changeip" method="post" \n>')
     res.write('<input type="text" name="ip" value="' + ip + '"/>IP<br />\n');
     res.write('<input type="text" name="netmask" value="' + netmask + '"/>Netmask<br />\n');
     res.write('<input type="text" name="gateway" value="' + gateway + '"/>Gateway<br />\n');
 		res.write('<button class="bottone">Save</button><br />\n');
-		res.write('</form><hr />\n');
+		res.write('</form><hr />\n');*/
 
     res.write('<form action="logout" method="post">\n');
 		res.write('<button class="bottone">Logout</button>\n');
@@ -314,5 +372,6 @@ https.createServer({
   	cert: fs.readFileSync('/srv/NASsiolus/certificate.pem')
 }, app)
 .listen(port, function () {
-  	console.log("https://" + ip + ":" + port + "\n");
+  	//console.log('https://' + ip + ':' + port + '\n');
+
 });
