@@ -5,9 +5,9 @@ A simple and very minimal NAS. With only one user and only one share.
 
 ## Install
 
-> git clone https://github.com/carlominucci/NASsiolus
-> cd NASsiolus
-> ./install.sh
+`git clone https://github.com/carlominucci/NASsiolus`
+`cd NASsiolus`
+`./install.sh`
 
 Follow the instruction for create SSL certificate.
 
