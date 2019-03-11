@@ -48,6 +48,7 @@ npm install check-disk-space
 npm install split
 npm install child_process
 npm install express-session
+npm install express-sanitizer
 npm install network-config
 echo
 

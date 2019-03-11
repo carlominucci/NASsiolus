@@ -1,5 +1,6 @@
 var express = require('express');
 var session = require('express-session');
+const expressSanitizer = require('express-sanitizer');
 var fs = require('fs');
 var https = require('https');
 var app = express();
@@ -24,6 +25,7 @@ var netmask;
 var gateway;
 var sess;
 
+app.use(expressSanitizer());
 app.use(session({
     secret: '2C44-4D44-WppQ38S',
     resave: true,
@@ -60,7 +62,6 @@ network.interfaces(function(err, interfaces){
   gateway = interfaces[0].gateway;
   console.log('https://' + ip + ':11235');
 });
-//console.log(ip);
 
 function sambaitem(callback){
   var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
@@ -101,8 +102,8 @@ app.get('/', function (req, res) {
 
 app.get('/newusername', function(req, res){
 	response = {
-		username: req.query.username,
-		password: req.query.password
+		username: req.sanitize(req.query.username),
+		password: req.sanitize(req.query.password)
 	};
 
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
@@ -154,11 +155,10 @@ app.get('/changepwd', function(req, res){
 
 app.get('/saveshare', function(req, res){
 	response = {
-		workgroup : req.query.workgroup,
-		share : req.query.share,
-		username : req.query.username,
-		id : req.query.id,
-		oldusername: req.query.oldusername
+		workgroup : req.sanitize(req.query.workgroup),
+		share : req.sanitize(req.query.share),
+		username : req.sanitize(req.query.username),
+		oldusername: req.sanitize(req.query.oldusername)
 	};
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
 	var line = etcpasswd.split("\n");var contents = fs.readFileSync('./passwd', 'utf8');
@@ -198,6 +198,21 @@ app.get('/saveshare', function(req, res){
   res.end();
 });
 
+app.post('/upgrade', function(req, res){
+  exec("apk update && apk upgrade",
+    function (error, stdout, stderr) {
+      res.set('Content-Type', 'text/html');
+   	  res.write(headerhtml);
+      res.write('<pre>\n');
+      res.write(stdout);
+      res.write('</pre>\n');
+      res.write('<form action="/admin" method="post">\n');
+      res.write('<button class="bottone" >Back</button>\n');
+      res.write('</form>\n');
+      res.end(footerhtml);
+  });
+});
+
 app.post('/poweroff', function(req, res){
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
@@ -229,7 +244,7 @@ app.post('/logout', function (req, res) {
   })
 });
 
-app.post('/changeip', function (req,res){
+/*app.post('/changeip', function (req,res){
   console.log(req.body.ip);
   console.log(req.body.netmask);
   console.log(req.body.gateway);
@@ -242,10 +257,10 @@ app.post('/changeip', function (req,res){
 
 })
   res.redirect('https://' + req.body.ip + ':11235');
-  /*res.set('Content-Type', 'text/html');
+  res.set('Content-Type', 'text/html');
 	res.write(writesaved);
-  res.end();*/
-});
+  res.end();
+});*/
 
 app.post('/admin', function (req, res, next){
   sess = req.session;
@@ -253,7 +268,7 @@ app.post('/admin', function (req, res, next){
 	res.write(headerhtml);
 
 	if(req.body.password){
-		var password=req.body.password;
+		var password=req.sanitize(req.body.password);
 		var sha512 = crypto.createHash('sha512').update(password).digest("hex");
     var contents = fs.readFileSync('./passwd', 'utf8');
     if(sha512 == contents){
@@ -358,6 +373,11 @@ app.post('/admin', function (req, res, next){
 		res.write('<form action="reboot" method="post">\n');
 		res.write('<button class="bottone">Reboot</button>\n');
 		res.write('</form>\n');
+
+    res.write('<form action="upgrade" method="post">\n');
+		res.write('<button class="bottone">Upgrade</button>\n');
+		res.write('</form>\n');
+
 		res.write('</div>\n');
 	}else if(!sess.login == true){
 
