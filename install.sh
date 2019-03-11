@@ -27,12 +27,13 @@ echo
 cp -v webgui.js /srv/NASsiolus/
 cp -v header.html /srv/NASsiolus/
 cp -v footer.html /srv/NASsiolus/
-cp -v passwd /srv/NASsiolus/
+cp -vu passwd /srv/NASsiolus/
 cp -rv node_modules /srv/NASsiolus/
 cp -v /etc/samba/smb.conf /etc/samba/smb.conf.orig
 mkdir /srv/NASsiolus_share/
 cp -v NASSiolus /etc/init.d/
 service NASsiolus start
+ln -s /etc/init.d/NASsiolus /etc/runlevels/default/NASsiolus
 
 echo
 echo "************************************"
