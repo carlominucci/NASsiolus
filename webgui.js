@@ -302,7 +302,7 @@ app.post('/admin', function (req, res, next){
     var minutes = Math.floor(os.uptime() % (60*60) / 60);
     var seconds = Math.floor(os.uptime() % 60);
 		res.write('<b>Uptime: </b>' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
-    res.write('<b>Load: </b>' + os.loadavg()[0] + '/' + os.loadavg()[1] + '/' + os.loadavg()[0] + '<br />\n');
+    res.write('<b>Load: </b>' + os.loadavg()[0] + '/' + os.loadavg()[1] + '/' + os.loadavg()[3] + '<br />\n');
     var percentmem = os.freemem * 100 / os.totalmem;
 		res.write('<b>Memory: </b>' + parseInt((os.totalmem/1024)/1024) + 'Mb total / ' + parseInt((os.freemem/1024)/1024) + 'Mb free - ' + parseInt(percentmem) + '% free\n');
     res.write('<canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasmem");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);</script><br >\n');
