@@ -314,8 +314,8 @@ app.post('/admin', function (req, res, next){
   	}
 
 		res.write('<div id="Account" class="tabcontent">\n');
-    res.write('Change login parameters.\n')
-		res.write('<form action="newusername" method="get"><br />\n');
+    res.write('Change login parameters.\n');
+		res.write('<form action="newusername" method="get">\n');
 		res.write('<input type="text" name="username" value="' + username + '" />Username<br />\n');
 		res.write('<input type="password" name="password" />Password<br />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
@@ -323,7 +323,7 @@ app.post('/admin', function (req, res, next){
 		res.write('</div>\n');
 
 		res.write('<div id="Share" class="tabcontent">\n');
-    res.write('Change <i>WorkGroup</i> and <i>Share</i> information.\n')
+    res.write('Change <i>WorkGroup</i> and <i>Share</i> information.\n');
 		res.write('<form action="saveshare" method="get">\n');
 		res.write('<input type="text" name="workgroup" value="' + workgroup + '" /> WorkGroup<br />\n');
 		res.write('<input type="text" name="share" value="' + share + '" /> Share<br />\n');
@@ -332,7 +332,7 @@ app.post('/admin', function (req, res, next){
 		res.write('</form>\n</div>\n');
 
 		res.write('<div id="System" class="tabcontent">\n');
-    res.write('Change <i>webgui</i> password.\n')
+    res.write('Change <i>webgui</i> password.\n');
     res.write('<form action="changepwd" method="get" >\n');
     res.write('<input type="password" name="oldpassword" />Old Password<br />\n');
     res.write('<input type="password" name="newpassword" />New Password<br />\n');
