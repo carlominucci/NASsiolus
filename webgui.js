@@ -245,24 +245,6 @@ app.post('/logout', function (req, res) {
   })
 });
 
-/*app.post('/changeip', function (req,res){
-  console.log(req.body.ip);
-  console.log(req.body.netmask);
-  console.log(req.body.gateway);
-  network.configure('eth0', {
-    ip: req.body.ip,
-    netmask: req.body.netmask,
-    gateway: req.body.gateway,
-    restart: true
-}, function(err){
-
-})
-  res.redirect('https://' + req.body.ip + ':11235');
-  res.set('Content-Type', 'text/html');
-	res.write(writesaved);
-  res.end();
-});*/
-
 app.post('/admin', function (req, res, next){
   sess = req.session;
 	res.set('Content-Type', 'text/html');
@@ -315,8 +297,9 @@ app.post('/admin', function (req, res, next){
     }else if (ip){
       res.write('smb://');
       res.write(ip);
-      res.write('/' + share + '\n');
+      res.write('/' + share + '<br />\n');
     }
+
     res.write('<form method="post" action="/admin">\n');
     res.write('<button class="bottone">Refresh</button>\n');
 		res.write('</form></div>\n');
