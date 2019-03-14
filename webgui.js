@@ -174,7 +174,7 @@ app.get('/saveshare', function(req, res){
 	sambaconfnew += "workgroup = " + response.workgroup + "\n";
 	sambaconfnew += "server string = " + response.workgroup + " " + response.share + " - NASsiolus\n";
 	sambaconfnew += "server role = standalone server\n";
-	sambaconfnew += "log file = /usr/local/samba/var/log.%m\n";
+	sambaconfnew += "log file = /var/log/samba/log.%m\n";
 	sambaconfnew += "max log size = 50\n";
 	sambaconfnew += "[" + response.share + "]\n";
 	sambaconfnew += "comment = " + response.share + " share\n";ciao
