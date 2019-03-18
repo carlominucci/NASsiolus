@@ -89,14 +89,14 @@ app.get('/', function (req, res) {
 	//networkdata();
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
-	res.write('<div id="Info">\n');
-	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1>\n');
-  res.write('<form action="admin" method="post">');
+	res.write('<div class="box">\n');
+	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1><br />\n');
+  res.write('smb://' + ip + '/' + share + '<br /><br />');
+  res.write('Password:<br /><form action="admin" method="post">');
   res.write('<input type="password" name="password" />\n');
   res.write('<button class="bottone">Login</button>\n');
-  res.write('</form>\n</div>\n');
-	res.write('<div id="Info">\n');
-	res.write('smb://' + ip + '/' + share);
+  res.write('</form>\n');
+
 	res.write('</div>\n');
 	res.end(footerhtml);
 });
@@ -139,8 +139,11 @@ app.get('/newusername', function(req, res){
   }
 
   res.set('Content-Type', 'text/html');
-	res.write(writesaved);
-  res.end();
+  res.write(headerhtml)
+  res.write('<div class="box">\n');
+  res.write(writesaved);
+  res.write('</div>');
+  res.end(footerhtml);
 });
 
 app.get('/changepwd', function(req, res){
@@ -149,8 +152,12 @@ app.get('/changepwd', function(req, res){
     fs.writeFile('passwd', crypto.createHash('sha512').update(req.query.newpassword).digest("hex") , function(err){
   		if (err) throw err;
   	});
+    res.set('Content-Type', 'text/html');
+    res.write(headerhtml)
+    res.write('<div class="box">\n');
     res.write(writesaved);
-    res.end;
+    res.write('</div>');
+    res.end(footerhtml);
   }
 });
 
@@ -177,7 +184,7 @@ app.get('/saveshare', function(req, res){
 	sambaconfnew += "log file = /var/log/samba/log.%m\n";
 	sambaconfnew += "max log size = 50\n";
 	sambaconfnew += "[" + response.share + "]\n";
-	sambaconfnew += "comment = " + response.share + " share\n";ciao
+	sambaconfnew += "comment = " + response.share + " share\n";
 	sambaconfnew += "path = /srv/NASsiolus_share\n";
 	sambaconfnew += "valid users = " + username + "\n";
 	sambaconfnew += "public = yes\n";
@@ -195,8 +202,11 @@ app.get('/saveshare', function(req, res){
 	exec("hostname -F /etc/hostname");
 
 	res.set('Content-Type', 'text/html');
+  res.write(headerhtml)
+  res.write('<div class="box">\n');
 	res.write(writesaved);
-  res.end();
+  res.write('</div>');
+  res.end(footerhtml);
 });
 
 app.post('/upgrade', function(req, res){
@@ -216,11 +226,11 @@ app.post('/upgrade', function(req, res){
 
 app.post('/poweroff', function(req, res){
 	res.set('Content-Type', 'text/html');
-	res.write(headerhtml);
-	res.write('<div class="System">\n');
-	res.write('Poweroff in progress...\n');
-	res.write('</div>\n');
-	res.end(footerhtml);
+  res.write(headerhtml)
+  res.write('<div class="box">\n');
+  res.write('Poweroff in progress..');
+  res.write('</div>');
+  res.end(footerhtml);
 	poweroff(function(output){
 		console.log("PowerOff");
 	});
@@ -228,11 +238,11 @@ app.post('/poweroff', function(req, res){
 
 app.post('/reboot', function(req, res){
 	res.set('Content-Type', 'text/html');
-	res.write(headerhtml);
-	res.write('<div class="System">\n');
-	res.write('Reboot in progress...\n');
-	res.write('</div>\n');
-	res.end(footerhtml);
+  res.write(headerhtml)
+  res.write('<div class="box">\n');
+  res.write('Reboot in progress..');
+  res.write('</div>');
+  res.end(footerhtml);
 	reboot(function(output){
 		console.log("Reboot");
 	});
@@ -266,12 +276,9 @@ app.post('/admin', function (req, res, next){
     sambaitem();
 		networkdata();
 
-		res.write('<button class="tablink" onclick="openPage(\'Info\', this, \'#ddd\')" id="defaultOpen">Info</button>\n');
-    res.write('<button class="tablink" onclick="openPage(\'Account\', this, \'#ddd\')">Account</button>\n');
-		res.write('<button class="tablink" onclick="openPage(\'Share\', this, \'#ddd\')">Share</button>\n');
-		res.write('<button class="tablink" onclick="openPage(\'System\', this, \'#ddd\')">System</button>\n');
-
-		res.write('<div id="Info" class="tabcontent">');
+    res.write('<div class="titlebox">' + workgroup + ' - ' + share + '</div>\n');
+		res.write('<div class="box">\n');
+    res.write('<h1>Info</h1><br />\n');
 		res.write('<b> ' + os.hostname + ': </b>');
     if(!ip){
       res.write('<i>Press Refresh button</i>');
@@ -285,13 +292,13 @@ app.post('/admin', function (req, res, next){
     var seconds = Math.floor(os.uptime() % 60);
 		res.write('<b>Uptime: </b>' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
     res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
-    res.write('<canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #d3d3d3; background-color: #fff"></canvas><script>var c = document.getElementById("canvasLoad");var ctx = c.getContext("2d");ctx.beginPath();ctx.lineTo(0,' + (30-((os.loadavg()[0].toFixed(2))*10)) + '); ctx.lineTo(50, ' + (30-((os.loadavg()[1].toFixed(2))*10)) + '); ctx.lineTo(100, ' + (30-((os.loadavg()[2].toFixed(2))*10)) + ');ctx.strokeStyle="#000";ctx.stroke();</script><br />\n');
+    res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #d3d3d3; background-color: #fff"></canvas><script>var c = document.getElementById("canvasLoad");var ctx = c.getContext("2d");ctx.beginPath();ctx.lineTo(0,' + (30-((os.loadavg()[0].toFixed(2))*10)) + '); ctx.lineTo(50, ' + (30-((os.loadavg()[1].toFixed(2))*10)) + '); ctx.lineTo(100, ' + (30-((os.loadavg()[2].toFixed(2))*10)) + ');ctx.strokeStyle="#000";ctx.stroke();</script><br />\n');
     var percentmem = os.freemem * 100 / os.totalmem;
 		res.write('<b>Memory: </b>' + parseInt((os.totalmem/1024)/1024) + 'Mb total / ' + parseInt((os.freemem/1024)/1024) + 'Mb free - ' + parseInt(percentmem) + '% free\n');
-    res.write('<canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasmem");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);</script><br />\n');
+    res.write('<br /><canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasmem");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);</script><br />\n');
     var percentdisk = freespace * 100 / totalspace;
 		res.write('<b>Disk Usage: </b>' + parseInt(((totalspace/1024)/1024)/1024) + 'Gb total / ' + parseInt(((freespace/1024)/1024)/1024) + 'Gb free - ' + parseInt(percentdisk) + '% free.\n');
-    res.write('<canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasdisk");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);</script><br />\n');
+    res.write('<br /><canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasdisk");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);</script><br />\n');
     res.write('<b>Share: </b>');
     if(!ip){
       res.write('<i>Press Refresh button</i>');
@@ -314,25 +321,26 @@ app.post('/admin', function (req, res, next){
   		}
   	}
 
-		res.write('<div id="Account" class="tabcontent">\n');
-    res.write('Change login parameters.\n');
+		res.write('<div class="box">\n');
+    res.write('<h1>Login parameters.</h1><br />\n');
 		res.write('<form action="newusername" method="get">\n');
-		res.write('<input type="text" name="username" value="' + username + '" />Username<br />\n');
-		res.write('<input type="password" name="password" />Password<br />\n');
+		res.write('Username:<br /><input type="text" name="username" value="' + username + '" size="20" /><br />\n');
+		res.write('Password:<br /><input type="password" name="password" size="20" /><br />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
 		res.write('</form>\n');
 		res.write('</div>\n');
 
-		res.write('<div id="Share" class="tabcontent">\n');
-    res.write('Change <i>WorkGroup</i> and <i>Share</i> information.\n');
+		res.write('<div class="box" >\n');
+    res.write('<h1><i>WorkGroup</i> and <i>Share</i></h1><br />\n');
 		res.write('<form action="saveshare" method="get">\n');
-		res.write('<input type="text" name="workgroup" value="' + workgroup + '" /> WorkGroup<br />\n');
-		res.write('<input type="text" name="share" value="' + share + '" /> Share<br />\n');
+		res.write('Workgroup:<br /><input type="text" name="workgroup" value="' + workgroup + '" /><br />\n');
+		res.write('Share:<br /><input type="text" name="share" value="' + share + '" /> Share<br />\n');
 		res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
 		res.write('</form>\n</div>\n');
 
-		res.write('<div id="System" class="tabcontent">\n');
+		res.write('<div class="box">\n');
+    res.write('<h1>System</h1><br />\n');
     res.write('Change <i>webgui</i> password.\n');
     res.write('<form action="changepwd" method="get" >\n');
     res.write('<input type="password" name="oldpassword" />Old Password<br />\n');
@@ -340,13 +348,6 @@ app.post('/admin', function (req, res, next){
     res.write('<input class="bottone" type="submit" value="Save" />\n');
     res.write('</form>\n');
     res.write('<hr />\n');
-
-    /*res.write('<form action="changeip" method="post" \n>')
-    res.write('<input type="text" name="ip" value="' + ip + '"/>IP<br />\n');
-    res.write('<input type="text" name="netmask" value="' + netmask + '"/>Netmask<br />\n');
-    res.write('<input type="text" name="gateway" value="' + gateway + '"/>Gateway<br />\n');
-		res.write('<button class="bottone">Save</button><br />\n');
-		res.write('</form><hr />\n');*/
 
     res.write('<form action="logout" method="post">\n');
 		res.write('<button class="bottone">Logout</button>\n');
@@ -366,9 +367,10 @@ app.post('/admin', function (req, res, next){
 
 		res.write('</div>\n');
 	}else if(!sess.login == true){
-
-		res.write('<div class="red">\n<h1>password errata</h1><br />\n');
-		res.write('<a href="/">Torna al Login</a>\n</div>\n');
+    res.write('<div class="box">\n');
+    res.write('Wrong password.<br />');
+    res.write('<a href="/">Login</a>\n');
+    res.write('</div>');
 	}
 	res.end(footerhtml);
 });
