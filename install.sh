@@ -30,8 +30,9 @@ cp -v footer.html /srv/NASsiolus/
 cp -vu passwd /srv/NASsiolus/
 cp -rv node_modules /srv/NASsiolus/
 cp -v /etc/samba/smb.conf /etc/samba/smb.conf.orig
-mkdir /srv/NASsiolus_share/
+mkdir /srv/NASsiolus_share
 cp -v NASSiolus /etc/init.d/
+service NASsiolus stop
 service NASsiolus start
 ln -s /etc/init.d/NASsiolus /etc/runlevels/default/NASsiolus
 

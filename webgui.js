@@ -25,7 +25,6 @@ var netmask;
 var gateway;
 var sess;
 
-
 app.use(expressSanitizer());
 app.use(session({
     secret: '2C44-4D44-WppQ38S',
@@ -118,14 +117,14 @@ app.get('/newusername', function(req, res){
         exec('deluser ' + tmp[0]);
       }
     }
-		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+		exec('sleep 1; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-    exec('chwon -R ' + response.username + ' /srv/NASsiolus');
+    exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
 	}else if(etcpasswd.indexOf('NASsiolus user') < 0){
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
     exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-    exec('chwon -R ' + response.username + ' /srv/NASsiolus');
+    exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
  	}
   var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
   var smbcontfmp;
@@ -230,7 +229,7 @@ app.post('/poweroff', function(req, res){
   res.write('<div class="box">\n');
   res.write('Poweroff in progress..');
   res.write('</div>');
-  res.end(footerhtml);
+  res.end(footerhtml);d3d3d3
 	poweroff(function(output){
 		console.log("PowerOff");
 	});
@@ -292,13 +291,13 @@ app.post('/admin', function (req, res, next){
     var seconds = Math.floor(os.uptime() % 60);
 		res.write('<b>Uptime: </b>' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
     res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
-    res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #d3d3d3; background-color: #fff"></canvas><script>var c = document.getElementById("canvasLoad");var ctx = c.getContext("2d");ctx.beginPath();ctx.lineTo(0,' + (30-((os.loadavg()[0].toFixed(2))*10)) + '); ctx.lineTo(50, ' + (30-((os.loadavg()[1].toFixed(2))*10)) + '); ctx.lineTo(100, ' + (30-((os.loadavg()[2].toFixed(2))*10)) + ');ctx.strokeStyle="#000";ctx.stroke();</script><br />\n');
+    res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas><script>var c = document.getElementById("canvasLoad");var ctx = c.getContext("2d");ctx.beginPath();ctx.lineTo(0,' + (30-((os.loadavg()[0].toFixed(2))*10)) + '); ctx.lineTo(50, ' + (30-((os.loadavg()[1].toFixed(2))*10)) + '); ctx.lineTo(100, ' + (30-((os.loadavg()[2].toFixed(2))*10)) + ');ctx.strokeStyle="#000";ctx.stroke();</script><br />\n');
     var percentmem = os.freemem * 100 / os.totalmem;
 		res.write('<b>Memory: </b>' + parseInt((os.totalmem/1024)/1024) + 'Mb total / ' + parseInt((os.freemem/1024)/1024) + 'Mb free - ' + parseInt(percentmem) + '% free\n');
-    res.write('<br /><canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasmem");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);</script><br />\n');
+    res.write('<br /><canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasmem");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);</script><br />\n');
     var percentdisk = freespace * 100 / totalspace;
 		res.write('<b>Disk Usage: </b>' + parseInt(((totalspace/1024)/1024)/1024) + 'Gb total / ' + parseInt(((freespace/1024)/1024)/1024) + 'Gb free - ' + parseInt(percentdisk) + '% free.\n');
-    res.write('<br /><canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #d3d3d3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasdisk");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);</script><br />\n');
+    res.write('<br /><canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasdisk");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);</script><br />\n');
     res.write('<b>Share: </b>');
     if(!ip){
       res.write('<i>Press Refresh button</i>');
@@ -307,6 +306,7 @@ app.post('/admin', function (req, res, next){
       res.write(ip);
       res.write('/' + share + '<br />\n');
     }
+    //res.write('<b>Connected user:</b>');
 
     res.write('<form method="post" action="/admin">\n');
     res.write('<button class="bottone">Refresh</button>\n');
