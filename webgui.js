@@ -229,7 +229,7 @@ app.post('/poweroff', function(req, res){
   res.write('<div class="box">\n');
   res.write('Poweroff in progress..');
   res.write('</div>');
-  res.end(footerhtml);d3d3d3
+  res.end(footerhtml);
 	poweroff(function(output){
 		console.log("PowerOff");
 	});

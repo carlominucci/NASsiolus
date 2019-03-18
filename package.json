@@ -7,17 +7,17 @@
     "body-parser": "^1.18.3",
     "check-disk-space": "^1.5.0",
     "child_process": "^1.0.2",
-    "crypto": "^1.0.1",
     "cookie-session": "^1.3.3",
     "cookies": "^0.7.3",
+    "crypto": "^1.0.1",
     "express": "^4.16.4",
-    "express-session": "^1.15.6",
-    "fs": "^0.0.1-security",
-    "os": "^0.1.1",
     "express-sanitizer": "^1.0.5",
+    "express-session": "^1.15.6",
+    "fs": "0.0.1-security",
     "network-config": "^2.0.0",
-    "split": "^1.0.1",
-    "sha512": "^0.0.1"
+    "os": "^0.1.1",
+    "sha512": "^0.0.1",
+    "split": "^1.0.1"
   },
   "devDependencies": {},
   "scripts": {
