@@ -291,13 +291,43 @@ app.post('/admin', function (req, res, next){
     var seconds = Math.floor(os.uptime() % 60);
 		res.write('<b>Uptime: </b>' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
     res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
-    res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas><script>var c = document.getElementById("canvasLoad");var ctx = c.getContext("2d");ctx.beginPath();ctx.lineTo(0,' + (30-((os.loadavg()[0].toFixed(2))*10)) + '); ctx.lineTo(50, ' + (30-((os.loadavg()[1].toFixed(2))*10)) + '); ctx.lineTo(100, ' + (30-((os.loadavg()[2].toFixed(2))*10)) + ');ctx.strokeStyle="#000";ctx.stroke();</script><br />\n');
+
+    var m;
+    function printLoad(loadavg){
+      if(loadavg < 1){
+        m = 100;
+      }
+      if(loadavg <10 && loadavg > 1){
+        m = 10;
+      }
+      if(loadavg > 10){
+        m = 1;
+      }
+      //console.log(m);
+    }
+
+    res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas>\n<script>var c = document.getElementById("canvasLoad");\nvar ctx = c.getContext("2d");\nctx.beginPath();\nctx.lineTo(0,');
+    printLoad(os.loadavg()[0]);
+    res.write((30-((os.loadavg()[0].toFixed(2))*m)) + ');\nctx.lineTo(50, ');
+    printLoad(os.loadavg()[1]);
+    res.write((30-((os.loadavg()[1].toFixed(2))*m)) + ');\nctx.lineTo(100, ');
+    printLoad(os.loadavg()[2]);
+    res.write((30-((os.loadavg()[2].toFixed(2))*m)) + ');\nctx.strokeStyle="#000";\nctx.stroke();\n</script><br />\n');
+
     var percentmem = os.freemem * 100 / os.totalmem;
-		res.write('<b>Memory: </b>' + parseInt((os.totalmem/1024)/1024) + 'Mb total / ' + parseInt((os.freemem/1024)/1024) + 'Mb free - ' + parseInt(percentmem) + '% free\n');
-    res.write('<br /><canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasmem");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);</script><br />\n');
+    res.write('<b>Memory: </b><br />');
+    res.write('<canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasmem");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);\n')
+    res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentmem)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentmem) + '%", ' + (100-parseInt(percentmem)+5) + ', 25);');
+    res.write('</script><br />\n');
+    res.write(parseInt((os.totalmem/1024)/1024) + 'Mb total<br /> ' + parseInt((os.totalmem-os.freemem)/1024/1024) + ' Mb used<br />' + parseInt((os.freemem/1024)/1024) + 'Mb free<br />\n');
+
     var percentdisk = freespace * 100 / totalspace;
-		res.write('<b>Disk Usage: </b>' + parseInt(((totalspace/1024)/1024)/1024) + 'Gb total / ' + parseInt(((freespace/1024)/1024)/1024) + 'Gb free - ' + parseInt(percentdisk) + '% free.\n');
-    res.write('<br /><canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas><script>var c = document.getElementById("myCanvasdisk");var ctx = c.getContext("2d");ctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);</script><br />\n');
+    res.write('<b>Disk Usage: </b><br />');
+    res.write('<canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasdisk");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);\n');
+    res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentdisk)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentdisk) + '%", ' + (100-parseInt(percentdisk)+5) + ', 25);');
+    res.write('</script><br />\n');
+    res.write(parseInt(((totalspace/1024)/1024)/1024) + 'Gb total<br />' + parseInt((totalspace+freespace)/1024/1024/1025) + 'Gb used<br /> ' +parseInt(((freespace/1024)/1024)/1024) + 'Gb free<br />\n');
+
     res.write('<b>Share: </b>');
     if(!ip){
       res.write('<i>Press Refresh button</i>');
@@ -322,7 +352,7 @@ app.post('/admin', function (req, res, next){
   	}
 
 		res.write('<div class="box">\n');
-    res.write('<h1>Login parameters.</h1><br />\n');
+    res.write('<h1>Login parameters</h1><br />\n');
 		res.write('<form action="newusername" method="get">\n');
 		res.write('Username:<br /><input type="text" name="username" value="' + username + '" size="20" /><br />\n');
 		res.write('Password:<br /><input type="password" name="password" size="20" /><br />\n');
