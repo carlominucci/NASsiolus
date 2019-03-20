@@ -36,17 +36,17 @@ const headerhtml = fs.readFileSync("./header.html");
 const footerhtml = fs.readFileSync("./footer.html");
 var writesaved = headerhtml + '<div class="action">\n' + 'Saved.\n' + '<form action="/admin" method="post">\n' + '<button class="bottone" >Back</button>\n' + '</form>\n' + '</div>\n' + footerhtml;
 
+checkDiskSpace('/').then((diskSpace) => {
+  freespace=diskSpace.free;
+  totalspace=diskSpace.size;
+});
+
 function poweroff(callback){
 	exec('poweroff', function(error, stdout, stderr){ callback(stdout); });
 }
 function reboot(callback){
 	exec('reboot', function(error, stdout, stderr){ callback(stdout); });
 }
-
-checkDiskSpace('/').then((diskSpace) => {
-	freespace=diskSpace.free;
-	totalspace=diskSpace.size;
-});
 
 function networkdata(callback){
   network.interfaces(function(err, interfaces){
@@ -213,12 +213,14 @@ app.post('/upgrade', function(req, res){
     function (error, stdout, stderr) {
       res.set('Content-Type', 'text/html');
    	  res.write(headerhtml);
+  		res.write('<div class="boxupdate">\n');
+      res.write('<h1>Update</h1>\n')
       res.write('<pre>\n');
       res.write(stdout);
       res.write('</pre>\n');
       res.write('<form action="/admin" method="post">\n');
       res.write('<button class="bottone" >Back</button>\n');
-      res.write('</form>\n');
+      res.write('</form></div>\n');
       res.end(footerhtml);
   });
 });
@@ -286,47 +288,52 @@ app.post('/admin', function (req, res, next){
     }
     res.write('<br />\n');
 		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
-    var hours = Math.floor(os.uptime() / (60*60));
+    var days = Math.floor(os.uptime() / (60*60*24));
+    var hours = Math.floor((os.uptime() / (60*60)) - (24 * days));
     var minutes = Math.floor(os.uptime() % (60*60) / 60);
     var seconds = Math.floor(os.uptime() % 60);
-		res.write('<b>Uptime: </b>' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
+		res.write('<b>Uptime: </b>' + days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
     res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
 
-    var m;
+    var loadpixel;
     function printLoad(loadavg){
       if(loadavg < 1){
-        m = 100;
+        loadpixel = 30-(loadavg * 10);
       }
       if(loadavg <10 && loadavg > 1){
-        m = 10;
+        loadpixel = 20-loadavg;
       }
       if(loadavg > 10){
-        m = 1;
+        loadpixel = 30-((loadavg * 50) / 30);
       }
       //console.log(m);
     }
 
     res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas>\n<script>var c = document.getElementById("canvasLoad");\nvar ctx = c.getContext("2d");\nctx.beginPath();\nctx.lineTo(0,');
     printLoad(os.loadavg()[0]);
-    res.write((30-((os.loadavg()[0].toFixed(2))*m)) + ');\nctx.lineTo(50, ');
+    res.write(loadpixel + ');\nctx.lineTo(50, ');
     printLoad(os.loadavg()[1]);
-    res.write((30-((os.loadavg()[1].toFixed(2))*m)) + ');\nctx.lineTo(100, ');
+    res.write(loadpixel + ');\nctx.lineTo(100, ');
     printLoad(os.loadavg()[2]);
-    res.write((30-((os.loadavg()[2].toFixed(2))*m)) + ');\nctx.strokeStyle="#000";\nctx.stroke();\n</script><br />\n');
+    res.write(loadpixel + ');\nctx.strokeStyle="#000";\nctx.stroke();\n</script><br />\n');
 
     var percentmem = os.freemem * 100 / os.totalmem;
     res.write('<b>Memory: </b><br />');
     res.write('<canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasmem");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);\n')
     res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentmem)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentmem) + '%", ' + (100-parseInt(percentmem)+5) + ', 25);');
     res.write('</script><br />\n');
-    res.write(parseInt((os.totalmem/1024)/1024) + 'Mb total<br /> ' + parseInt((os.totalmem-os.freemem)/1024/1024) + ' Mb used<br />' + parseInt((os.freemem/1024)/1024) + 'Mb free<br />\n');
+    res.write(parseInt((os.totalmem/1024)/1024) + ' Mb total<br /> ' + parseInt((os.totalmem-os.freemem)/1024/1024) + ' Mb used<br />' + parseInt((os.freemem/1024)/1024) + ' Mb free<br />\n');
 
+    checkDiskSpace('/').then((diskSpace) => {
+    	freespace=diskSpace.free;
+    	totalspace=diskSpace.size;
+    });
     var percentdisk = freespace * 100 / totalspace;
     res.write('<b>Disk Usage: </b><br />');
     res.write('<canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasdisk");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);\n');
     res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentdisk)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentdisk) + '%", ' + (100-parseInt(percentdisk)+5) + ', 25);');
     res.write('</script><br />\n');
-    res.write(parseInt(((totalspace/1024)/1024)/1024) + 'Gb total<br />' + parseInt((totalspace+freespace)/1024/1024/1025) + 'Gb used<br /> ' +parseInt(((freespace/1024)/1024)/1024) + 'Gb free<br />\n');
+    res.write( (((totalspace/1024)/1024)/1024).toFixed(2) + ' Gb total<br />' + ((totalspace-freespace)/1024/1024/1024).toFixed(2) + ' Gb used<br /> ' + (((freespace/1024)/1024)/1024).toFixed(2) + ' Gb free<br />\n');
 
     res.write('<b>Share: </b>');
     if(!ip){
@@ -364,7 +371,7 @@ app.post('/admin', function (req, res, next){
     res.write('<h1><i>WorkGroup</i> and <i>Share</i></h1><br />\n');
 		res.write('<form action="saveshare" method="get">\n');
 		res.write('Workgroup:<br /><input type="text" name="workgroup" value="' + workgroup + '" /><br />\n');
-		res.write('Share:<br /><input type="text" name="share" value="' + share + '" /> Share<br />\n');
+		res.write('Share:<br /><input type="text" name="share" value="' + share + '" /><br />\n');
 		res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
 		res.write('<input class="bottone" type="submit" value="Save" />\n');
 		res.write('</form>\n</div>\n');
@@ -399,7 +406,9 @@ app.post('/admin', function (req, res, next){
 	}else if(!sess.login == true){
     res.write('<div class="box">\n');
     res.write('Wrong password.<br />');
-    res.write('<a href="/">Login</a>\n');
+    res.write('<form action="/logout" method="post">\n');
+    res.write('<button class="bottone" >Back</button>\n');
+    res.write('</form>\n');
     res.write('</div>');
 	}
 	res.end(footerhtml);
