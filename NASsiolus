@@ -13,6 +13,6 @@ stop() {
 
 reload() {
 	killall node
-	node /srv/NASsiolus/webgui.js &
+  cd /srv/NASsiolus
+	node ./webgui.js &
 }
-
