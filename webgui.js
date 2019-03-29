@@ -117,7 +117,7 @@ app.get('/newusername', function(req, res){
         exec('deluser ' + tmp[0]);
       }
     }
-		exec('sleep 1; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+		exec('sleep 2; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
     exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
 	}else if(etcpasswd.indexOf('NASsiolus user') < 0){
@@ -378,10 +378,10 @@ app.post('/admin', function (req, res, next){
 
 		res.write('<div class="box">\n');
     res.write('<h1>System</h1><br />\n');
-    res.write('Change <i>webgui</i> password.\n');
+    res.write('Change <i>webgui</i> password.<br />\n');
     res.write('<form action="changepwd" method="get" >\n');
-    res.write('<input type="password" name="oldpassword" />Old Password<br />\n');
-    res.write('<input type="password" name="newpassword" />New Password<br />\n');
+    res.write('Old Password:<br /><input type="password" name="oldpassword" />\n');
+    res.write('New Password:<br /><input type="password" name="newpassword" />\n');
     res.write('<input class="bottone" type="submit" value="Save" />\n');
     res.write('</form>\n');
     res.write('<hr />\n');
