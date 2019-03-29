@@ -57,45 +57,44 @@ function networkdata(callback){
 }
 
 network.interfaces(function(err, interfaces){
-  ip = interfaces[0].ip;
-  netmask = interfaces[0].netmask;
-  gateway = interfaces[0].gateway;
-  console.log('https://' + ip + ':11235');
+	ip = interfaces[0].ip;
+	netmask = interfaces[0].netmask;
+	gateway = interfaces[0].gateway;
+	console.log('https://' + ip + ':11235');
 });
 
 function sambaitem(callback){
-  var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
-  var line = smbconf.split("\n");
-  for (i = 0; i < line.length; i++) {
-    var tmp = line[i].split("=");
-    if(tmp[0].trim() == "workgroup"){
-      workgroup=(tmp[1].trim());
-    }
-    if(tmp[0].trim() == "valid users"){
-      user=(tmp[1].trim());
-    }
-    if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
-      share=(tmp[0].replace(/[\[\]]/g, ''));
-    }
-  }
+	var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
+ 	var line = smbconf.split("\n");
+  	for (i = 0; i < line.length; i++) {
+    		var tmp = line[i].split("=");
+    		if(tmp[0].trim() == "workgroup"){
+      			workgroup=(tmp[1].trim());
+    		}
+    		if(tmp[0].trim() == "valid users"){
+      			user=(tmp[1].trim());
+    		}
+    		if(tmp[0].match(/\[*\]/) && !tmp[0].match(/\[global\]/)){
+      			share=(tmp[0].replace(/[\[\]]/g, ''));
+    		}
+  	}
 }
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.get('/', function (req, res) {
-  sambaitem();
+	sambaitem();
 	//networkdata();
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
 	res.write('<div class="box">\n');
 	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1><br />\n');
-  res.write('smb://' + ip + '/' + share + '<br /><br />');
-  res.write('Password:<br /><form action="admin" method="post">');
-  res.write('<input type="password" name="password" />\n');
-  res.write('<button class="bottone">Login</button>\n');
-  res.write('</form>\n');
-
+  	res.write('smb://' + ip + '/' + share + '<br /><br />');
+  	res.write('Password:<br /><form action="admin" method="post">');
+  	res.write('<input type="password" name="password" />\n');
+  	res.write('<button class="bottone">Login</button>\n');
+  	res.write('</form>\n');
 	res.write('</div>\n');
 	res.end(footerhtml);
 });
@@ -107,57 +106,58 @@ app.get('/newusername', function(req, res){
 	};
 
 	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
-  if(etcpasswd.indexOf('NASsiolus user') >= 0){
-    var line = etcpasswd.split("\n");
-    for (i = 0; i < line.length; i++) {
-      if(line[i].indexOf('NASsiolus user')  >= 0 ){
-        var tmp = line[i].split(":");
-        var username = tmp[0];
-        exec('smbpasswd -x ' + tmp[0]);
-        exec('deluser ' + tmp[0]);
-      }
-    }
-		exec('sleep 2; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
-		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-    exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
+  	if(etcpasswd.indexOf('NASsiolus user') >= 0){
+    		var line = etcpasswd.split("\n");
+    		for (i = 0; i < line.length; i++) {
+      			if(line[i].indexOf('NASsiolus user')  >= 0 ){
+        		var tmp = line[i].split(":");
+        		var username = tmp[0];
+        		exec('smbpasswd -x ' + tmp[0]);
+        		exec('deluser ' + tmp[0]);
+      		}
+    	}
+	exec('sleep 2; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+	exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
+    	exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
 	}else if(etcpasswd.indexOf('NASsiolus user') < 0){
 		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
-    exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
+   		 exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
 		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-    exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
+    		exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
  	}
-  var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
-  var smbcontfmp;
-  var line = smbconf.split("\n");
-  for (i = 0; i < line.length; i++) {
-    if(line[i].indexOf('valid users') >= 0){
-        smbcontfmp += 'valid users = ' + response.username + '\n';
-    }else{
-        smbcontfmp += line[i] + '\n';
-    }
-  }
+  
+	var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
+  	var smbcontfmp;
+  	var line = smbconf.split("\n");
+  	for (i = 0; i < line.length; i++) {
+    		if(line[i].indexOf('valid users') >= 0){
+        		smbcontfmp += 'valid users = ' + response.username + '\n';
+    		}else{
+        		smbcontfmp += line[i] + '\n';
+    		}
+  	}
 
-  res.set('Content-Type', 'text/html');
-  res.write(headerhtml)
-  res.write('<div class="box">\n');
-  res.write(writesaved);
-  res.write('</div>');
-  res.end(footerhtml);
+  	res.set('Content-Type', 'text/html');
+  	res.write(headerhtml)
+  	res.write('<div class="box">\n');
+  	res.write(writesaved);
+  	res.write('</div>');
+  	res.end(footerhtml);
 });
 
 app.get('/changepwd', function(req, res){
-  var contents = fs.readFileSync('./passwd', 'utf8');
-  if(contents == crypto.createHash('sha512').update(req.query.oldpassword).digest("hex")){
-    fs.writeFile('passwd', crypto.createHash('sha512').update(req.query.newpassword).digest("hex") , function(err){
+  	var contents = fs.readFileSync('./passwd', 'utf8');
+  	if(contents == crypto.createHash('sha512').update(req.query.oldpassword).digest("hex")){
+    		fs.writeFile('passwd', crypto.createHash('sha512').update(req.query.newpassword).digest("hex") , function(err){
   		if (err) throw err;
-  	});
-    res.set('Content-Type', 'text/html');
-    res.write(headerhtml)
-    res.write('<div class="box">\n');
-    res.write(writesaved);
-    res.write('</div>');
-    res.end(footerhtml);
-  }
+  		});
+    	res.set('Content-Type', 'text/html');
+    	res.write(headerhtml)
+    	res.write('<div class="box">\n');
+    	res.write(writesaved);
+    	res.write('</div>');
+    	res.end(footerhtml);
+  	}
 });
 
 app.get('/saveshare', function(req, res){
@@ -201,37 +201,37 @@ app.get('/saveshare', function(req, res){
 	exec("hostname -F /etc/hostname");
 
 	res.set('Content-Type', 'text/html');
-  res.write(headerhtml)
-  res.write('<div class="box">\n');
+  	res.write(headerhtml)
+  	res.write('<div class="box">\n');
 	res.write(writesaved);
-  res.write('</div>');
-  res.end(footerhtml);
+  	res.write('</div>');
+  	res.end(footerhtml);
 });
 
 app.post('/upgrade', function(req, res){
-  exec("apk update && apk upgrade",
-    function (error, stdout, stderr) {
-      res.set('Content-Type', 'text/html');
-   	  res.write(headerhtml);
+	exec("apk update && apk upgrade",
+    	function (error, stdout, stderr) {
+      		res.set('Content-Type', 'text/html');
+   	 	res.write(headerhtml);
   		res.write('<div class="boxupdate">\n');
-      res.write('<h1>Update</h1>\n')
-      res.write('<pre>\n');
-      res.write(stdout);
-      res.write('</pre>\n');
-      res.write('<form action="/admin" method="post">\n');
-      res.write('<button class="bottone" >Back</button>\n');
-      res.write('</form></div>\n');
-      res.end(footerhtml);
-  });
+      		res.write('<h1>Update</h1>\n')
+      		res.write('<pre>\n');
+      		res.write(stdout);
+      		res.write('</pre>\n');
+      		res.write('<form action="/admin" method="post">\n');
+      		res.write('<button class="bottone" >Back</button>\n');
+      		res.write('</form></div>\n');
+      		res.end(footerhtml);
+  	});
 });
 
 app.post('/poweroff', function(req, res){
 	res.set('Content-Type', 'text/html');
-  res.write(headerhtml)
-  res.write('<div class="box">\n');
-  res.write('Poweroff in progress..');
-  res.write('</div>');
-  res.end(footerhtml);
+  	res.write(headerhtml)
+  	res.write('<div class="box">\n');
+  	res.write('Poweroff in progress..');
+  	res.write('</div>');
+  	res.end(footerhtml);
 	poweroff(function(output){
 		console.log("PowerOff");
 	});
@@ -239,77 +239,77 @@ app.post('/poweroff', function(req, res){
 
 app.post('/reboot', function(req, res){
 	res.set('Content-Type', 'text/html');
-  res.write(headerhtml)
-  res.write('<div class="box">\n');
-  res.write('Reboot in progress..');
-  res.write('</div>');
-  res.end(footerhtml);
+  	res.write(headerhtml)
+  	res.write('<div class="box">\n');
+  	res.write('Reboot in progress..');
+  	res.write('</div>');
+  	res.end(footerhtml);
 	reboot(function(output){
 		console.log("Reboot");
 	});
 });
 
 app.post('/logout', function (req, res) {
-  req.session.destroy(function (err) {
-  if (err) return next(err)
-    res.redirect('/')
-  })
+  	req.session.destroy(function (err) {
+  	if (err) return next(err)
+    		res.redirect('/')
+  	});
 });
 
 app.post('/admin', function (req, res, next){
-  sess = req.session;
+  	sess = req.session;
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
 
 	if(req.body.password){
 		var password=req.sanitize(req.body.password);
 		var sha512 = crypto.createHash('sha512').update(password).digest("hex");
-    var contents = fs.readFileSync('./passwd', 'utf8');
-    if(sha512 == contents){
-      sess = req.session;
-      sess.login=true;
-    }else{
-      sess.login=false;
-    }
+    		var contents = fs.readFileSync('./passwd', 'utf8');
+    		if(sha512 == contents){
+      			sess = req.session;
+      			sess.login=true;
+    		}else{
+      			sess.login=false;
+    		}
 	}
 
 	if(sess.login == true){
-    sambaitem();
+    		sambaitem();
 		networkdata();
 
-    res.write('<div class="titlebox">' + workgroup + ' - ' + share + '</div>\n');
+    		res.write('<div class="titlebox">' + workgroup + ' - ' + share + '</div>\n');
 		res.write('<div class="box">\n');
-    res.write('<h1>Info</h1><br />\n');
+    		res.write('<h1>Info</h1><br />\n');
 		res.write('<b> ' + os.hostname + ': </b>');
-    if(!ip){
-      res.write('<i>Press Refresh button</i>');
-    }else if (ip){
-      res.write(ip);
-    }
-    res.write('<br />\n');
-		res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
-    var days = Math.floor(os.uptime() / (60*60*24));
-    var hours = Math.floor((os.uptime() / (60*60)) - (24 * days));
-    var minutes = Math.floor(os.uptime() % (60*60) / 60);
-    var seconds = Math.floor(os.uptime() % 60);
-		res.write('<b>Uptime: </b>' + days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
-    res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
+    	if(!ip){
+      		res.write('<i>Press Refresh button</i>');
+    	}else if (ip){
+      		res.write(ip);
+    	}
+    	res.write('<br />\n');
+	res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
+    	var days = Math.floor(os.uptime() / (60*60*24));
+    	var hours = Math.floor((os.uptime() / (60*60)) - (24 * days));
+    	var minutes = Math.floor(os.uptime() % (60*60) / 60);
+    	var seconds = Math.floor(os.uptime() % 60);
+	res.write('<b>Uptime: </b>' + days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
+    	res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
 
-    var loadpixel;
-    function printLoad(loadavg){
-      if(loadavg < 1){
-        loadpixel = 30-(loadavg * 10);
-      }
-      if(loadavg <10 && loadavg > 1){
-        loadpixel = 20-loadavg;
-      }
-      if(loadavg > 10){
-        loadpixel = 30-((loadavg * 50) / 30);
-      }
-      //console.log(m);
+    	var loadpixel;
+    	function printLoad(loadavg){
+      	if(loadavg < 1){
+        	loadpixel = 30-(loadavg * 10);
+      	}
+      	if(loadavg <10 && loadavg > 1){
+        	loadpixel = 20-loadavg;
+      	}
+      	if(loadavg > 10){
+        	loadpixel = 30-((loadavg * 50) / 30);
+      	}
+      	//console.log(m);
     }
 
-    res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas>\n<script>var c = document.getElementById("canvasLoad");\nvar ctx = c.getContext("2d");\nctx.beginPath();\nctx.lineTo(0,');
+	res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas>\n<script>var c = document.getElementById("canvasLoad");\nvar ctx = c.getContext("2d");\nctx.beginPath();\nctx.lineTo(0,');
     printLoad(os.loadavg()[0]);
     res.write(loadpixel + ');\nctx.lineTo(50, ');
     printLoad(os.loadavg()[1]);
@@ -337,11 +337,11 @@ app.post('/admin', function (req, res, next){
 
     res.write('<b>Share: </b>');
     if(!ip){
-      res.write('<i>Press Refresh button</i>');
+      	res.write('<i>Press Refresh button</i>');
     }else if (ip){
-      res.write('smb://');
-      res.write(ip);
-      res.write('/' + share + '<br />\n');
+      	res.write('smb://');
+      	res.write(ip);
+      	res.write('/' + share + '<br />\n');
     }
     //res.write('<b>Connected user:</b>');
 
@@ -358,51 +358,51 @@ app.post('/admin', function (req, res, next){
   		}
   	}
 
-		res.write('<div class="box">\n');
-    res.write('<h1>Login parameters</h1><br />\n');
-		res.write('<form action="newusername" method="get">\n');
-		res.write('Username:<br /><input type="text" name="username" value="' + username + '" size="20" /><br />\n');
-		res.write('Password:<br /><input type="password" name="password" size="20" /><br />\n');
-		res.write('<input class="bottone" type="submit" value="Save" />\n');
-		res.write('</form>\n');
-		res.write('</div>\n');
+	res.write('<div class="box">\n');
+    	res.write('<h1>Login parameters</h1><br />\n');
+	res.write('<form action="newusername" method="get">\n');
+	res.write('Username:<br /><input type="text" name="username" value="' + username + '" size="20" /><br />\n');
+	res.write('Password:<br /><input type="password" name="password" size="20" /><br />\n');
+	res.write('<input class="bottone" type="submit" value="Save" />\n');
+	res.write('</form>\n');
+	res.write('</div>\n');
 
-		res.write('<div class="box" >\n');
-    res.write('<h1><i>WorkGroup</i> and <i>Share</i></h1><br />\n');
-		res.write('<form action="saveshare" method="get">\n');
-		res.write('Workgroup:<br /><input type="text" name="workgroup" value="' + workgroup + '" /><br />\n');
-		res.write('Share:<br /><input type="text" name="share" value="' + share + '" /><br />\n');
-		res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
-		res.write('<input class="bottone" type="submit" value="Save" />\n');
-		res.write('</form>\n</div>\n');
+	res.write('<div class="box" >\n');
+    	res.write('<h1><i>WorkGroup</i> and <i>Share</i></h1><br />\n');
+	res.write('<form action="saveshare" method="get">\n');
+	res.write('Workgroup:<br /><input type="text" name="workgroup" value="' + workgroup + '" /><br />\n');
+	res.write('Share:<br /><input type="text" name="share" value="' + share + '" /><br />\n');
+	res.write('<input type="hidden" name="oldusername" value="' + user + '" />\n');
+	res.write('<input class="bottone" type="submit" value="Save" />\n');
+	res.write('</form>\n</div>\n');
 
-		res.write('<div class="box">\n');
-    res.write('<h1>System</h1><br />\n');
-    res.write('Change <i>webgui</i> password.<br />\n');
-    res.write('<form action="changepwd" method="get" >\n');
-    res.write('Old Password:<br /><input type="password" name="oldpassword" />\n');
-    res.write('New Password:<br /><input type="password" name="newpassword" />\n');
-    res.write('<input class="bottone" type="submit" value="Save" />\n');
-    res.write('</form>\n');
-    res.write('<hr />\n');
+	res.write('<div class="box">\n');
+    	res.write('<h1>System</h1><br />\n');
+    	res.write('Change <i>webgui</i> password.<br />\n');
+    	res.write('<form action="changepwd" method="get" >\n');
+   	res.write('Old Password:<br /><input type="password" name="oldpassword" />\n');
+    	res.write('New Password:<br /><input type="password" name="newpassword" />\n');
+    	res.write('<input class="bottone" type="submit" value="Save" />\n');
+    	res.write('</form>\n');
+    	res.write('<hr />\n');
 
-    res.write('<form action="logout" method="post">\n');
-		res.write('<button class="bottone">Logout</button>\n');
-		res.write('</form>\n');
+    	res.write('<form action="logout" method="post">\n');
+	res.write('<button class="bottone">Logout</button>\n');
+	res.write('</form>\n');
 
-		res.write('<form action="poweroff" method="post">\n');
-		res.write('<button class="bottone">PowerOff</button>\n');
-		res.write('</form>\n');
+	res.write('<form action="poweroff" method="post">\n');
+	res.write('<button class="bottone">PowerOff</button>\n');
+	res.write('</form>\n');
 
-		res.write('<form action="reboot" method="post">\n');
-		res.write('<button class="bottone">Reboot</button>\n');
-		res.write('</form>\n');
+	res.write('<form action="reboot" method="post">\n');
+	res.write('<button class="bottone">Reboot</button>\n');
+	res.write('</form>\n');
 
-    res.write('<form action="upgrade" method="post">\n');
-		res.write('<button class="bottone">Upgrade</button>\n');
-		res.write('</form>\n');
+    	res.write('<form action="upgrade" method="post">\n');
+	res.write('<button class="bottone">Upgrade</button>\n');
+	res.write('</form>\n');
 
-		res.write('</div>\n');
+	res.write('</div>\n');
 	}else if(!sess.login == true){
     res.write('<div class="box">\n');
     res.write('Wrong password.<br />');
