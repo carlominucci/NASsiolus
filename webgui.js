@@ -119,7 +119,7 @@ app.get('/newusername', function(req, res){
       var command = 'adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username + '; ';
       command += '(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username+ '; ';
       command += 'chown -R ' + response.username + ' /srv/NASsiolus_share';
-      //console.log(command);
+      console.log(command);
       exec(command);
         //exec('sleep 2; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
 	      //exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
@@ -220,7 +220,7 @@ app.get('/saveshare', function(req, res){
 });
 
 app.post('/upgrade', function(req, res){
-	exec("apk update && apk upgrade",
+	exec("apk update && apk upgrade; npm update",
     	function (error, stdout, stderr) {
       		res.set('Content-Type', 'text/html');
    	 	res.write(headerhtml);
