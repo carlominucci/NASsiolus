@@ -116,16 +116,27 @@ app.get('/newusername', function(req, res){
         		exec('deluser ' + tmp[0]);
       		}
     	}
-	exec('sleep 2; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
-	exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-    	exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
+      var command = 'adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username + '; ';
+      command += '(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username+ '; ';
+      command += 'chown -R ' + response.username + ' /srv/NASsiolus_share';
+      //console.log(command);
+      exec(command);
+        //exec('sleep 2; adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+	      //exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
+        //exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
 	}else if(etcpasswd.indexOf('NASsiolus user') < 0){
-		exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
-   		 exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
-		exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
-    		exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
+      var command = 'adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username + '; ';
+      command += '(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username + '; ';
+      command += '(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username + '; ';
+      command += 'chown -R ' + response.username + ' /srv/NASsiolus_share';
+      console.log(command);
+      exec(command);
+		    //exec('adduser -s /sbin/nologin -h /dev/null -g "NASsiolus user" ' + response.username);
+   	    //exec('(echo "' + response.password + '"; echo "' + response.password + '") | passwd ' + response.username)
+        //exec('(echo "' + response.password + '"; echo "' + response.password + '") | smbpasswd -a ' + response.username);
+        //exec('chwon -R ' + response.username + ' /srv/NASsiolus_share');
  	}
-  
+
 	var smbconf = fs.readFileSync('/etc/samba/smb.conf', 'utf8');
   	var smbcontfmp;
   	var line = smbconf.split("\n");
@@ -256,7 +267,7 @@ app.post('/logout', function (req, res) {
   	});
 });
 
-app.post('/admin', function (req, res, next){
+	app.post('/admin', function (req, res, next){
   	sess = req.session;
 	res.set('Content-Type', 'text/html');
 	res.write(headerhtml);
@@ -278,78 +289,78 @@ app.post('/admin', function (req, res, next){
 		networkdata();
 
     		res.write('<div class="titlebox">' + workgroup + ' - ' + share + '</div>\n');
-		res.write('<div class="box">\n');
+		    res.write('<div class="box">\n');
     		res.write('<h1>Info</h1><br />\n');
-		res.write('<b> ' + os.hostname + ': </b>');
+		    res.write('<b> ' + os.hostname + ': </b>');
+    		if(!ip){
+      			res.write('<i>Press Refresh button</i>');
+    		}else if (ip){
+      			res.write(ip);
+    		}
+    		res.write('<br />\n');
+		    res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
+    		var days = Math.floor(os.uptime() / (60*60*24));
+    		var hours = Math.floor((os.uptime() / (60*60)) - (24 * days));
+    		var minutes = Math.floor(os.uptime() % (60*60) / 60);
+    		var seconds = Math.floor(os.uptime() % 60);
+		    res.write('<b>Uptime: </b>' + days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
+    		res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
+
+    		var loadpixel;
+    		function printLoad(loadavg){
+      		if(loadavg < 1){
+        		loadpixel = 30-(loadavg * 10);
+      		}
+      		if(loadavg <10 && loadavg > 1){
+        		loadpixel = 20-loadavg;
+      		}
+      		if(loadavg > 10){
+        		loadpixel = 30-((loadavg * 50) / 30);
+      		}
+      		//console.log(m);
+    	}
+
+	res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas>\n<script>var c = document.getElementById("canvasLoad");\nvar ctx = c.getContext("2d");\nctx.beginPath();\nctx.lineTo(0,');
+    	printLoad(os.loadavg()[0]);
+    	res.write(loadpixel + ');\nctx.lineTo(50, ');
+    	printLoad(os.loadavg()[1]);
+    	res.write(loadpixel + ');\nctx.lineTo(100, ');
+    	printLoad(os.loadavg()[2]);
+    	res.write(loadpixel + ');\nctx.strokeStyle="#000";\nctx.stroke();\n</script><br />\n');
+
+    	var percentmem = os.freemem * 100 / os.totalmem;
+    	res.write('<b>Memory: </b><br />');
+    	res.write('<canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasmem");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);\n')
+    	res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentmem)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentmem) + '%", ' + (100-parseInt(percentmem)+5) + ', 25);');
+    	res.write('</script><br />\n');
+    	res.write(parseInt((os.totalmem/1024)/1024) + ' Mb total<br /> ' + parseInt((os.totalmem-os.freemem)/1024/1024) + ' Mb used<br />' + parseInt((os.freemem/1024)/1024) + ' Mb free<br />\n');
+
+    	checkDiskSpace('/').then((diskSpace) => {
+    		freespace=diskSpace.free;
+    		totalspace=diskSpace.size;
+    	});
+    	var percentdisk = freespace * 100 / totalspace;
+    	res.write('<b>Disk Usage: </b><br />');
+    	res.write('<canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasdisk");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);\n');
+    	res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentdisk)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentdisk) + '%", ' + (100-parseInt(percentdisk)+5) + ', 25);');
+    	res.write('</script><br />\n');
+    	res.write( (((totalspace/1024)/1024)/1024).toFixed(2) + ' Gb total<br />' + ((totalspace-freespace)/1024/1024/1024).toFixed(2) + ' Gb used<br /> ' + (((freespace/1024)/1024)/1024).toFixed(2) + ' Gb free<br />\n');
+
+    	res.write('<b>Share: </b>');
     	if(!ip){
       		res.write('<i>Press Refresh button</i>');
     	}else if (ip){
+      		res.write('smb://');
       		res.write(ip);
+      		res.write('/' + share + '<br />\n');
     	}
-    	res.write('<br />\n');
-	res.write('<b>Os: </b>' + os.type +  ' ' + os.release() + ' ' + os.arch() + '<br />\n');
-    	var days = Math.floor(os.uptime() / (60*60*24));
-    	var hours = Math.floor((os.uptime() / (60*60)) - (24 * days));
-    	var minutes = Math.floor(os.uptime() % (60*60) / 60);
-    	var seconds = Math.floor(os.uptime() % 60);
-	res.write('<b>Uptime: </b>' + days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's<br />\n');
-    	res.write('<b>Load: </b>' + os.loadavg()[0].toFixed(2) + '/' + os.loadavg()[1].toFixed(2) + '/' + os.loadavg()[2].toFixed(2) + '\n');
+    	//res.write('<b>Connected user:</b>');
 
-    	var loadpixel;
-    	function printLoad(loadavg){
-      	if(loadavg < 1){
-        	loadpixel = 30-(loadavg * 10);
-      	}
-      	if(loadavg <10 && loadavg > 1){
-        	loadpixel = 20-loadavg;
-      	}
-      	if(loadavg > 10){
-        	loadpixel = 30-((loadavg * 50) / 30);
-      	}
-      	//console.log(m);
-    }
+    	res.write('<form method="post" action="/admin">\n');
+    	res.write('<button class="bottone">Refresh</button>\n');
+	res.write('</form></div>\n');
 
-	res.write('<br /><canvas id="canvasLoad" width="100" height="30" style="border: 1px solid #2196F3; background-color: #fff"></canvas>\n<script>var c = document.getElementById("canvasLoad");\nvar ctx = c.getContext("2d");\nctx.beginPath();\nctx.lineTo(0,');
-    printLoad(os.loadavg()[0]);
-    res.write(loadpixel + ');\nctx.lineTo(50, ');
-    printLoad(os.loadavg()[1]);
-    res.write(loadpixel + ');\nctx.lineTo(100, ');
-    printLoad(os.loadavg()[2]);
-    res.write(loadpixel + ');\nctx.strokeStyle="#000";\nctx.stroke();\n</script><br />\n');
-
-    var percentmem = os.freemem * 100 / os.totalmem;
-    res.write('<b>Memory: </b><br />');
-    res.write('<canvas id="myCanvasmem" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasmem");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentmem)) + ', 30);\n')
-    res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentmem)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentmem) + '%", ' + (100-parseInt(percentmem)+5) + ', 25);');
-    res.write('</script><br />\n');
-    res.write(parseInt((os.totalmem/1024)/1024) + ' Mb total<br /> ' + parseInt((os.totalmem-os.freemem)/1024/1024) + ' Mb used<br />' + parseInt((os.freemem/1024)/1024) + ' Mb free<br />\n');
-
-    checkDiskSpace('/').then((diskSpace) => {
-    	freespace=diskSpace.free;
-    	totalspace=diskSpace.size;
-    });
-    var percentdisk = freespace * 100 / totalspace;
-    res.write('<b>Disk Usage: </b><br />');
-    res.write('<canvas id="myCanvasdisk" width="100" height="30" style="border:1px solid #2196F3; background-color: #fff;"></canvas>\n<script>var c = document.getElementById("myCanvasdisk");\nvar ctx = c.getContext("2d");\nctx.fillRect(0, 0, ' + (100-parseInt(percentdisk)) + ', 30);\n');
-    res.write('ctx.fillStyle = "red";ctx.fillText("' + (100-parseInt(percentdisk)) + '%", 5, 25);ctx.fillStyle = "green";ctx.fillText("' + parseInt(percentdisk) + '%", ' + (100-parseInt(percentdisk)+5) + ', 25);');
-    res.write('</script><br />\n');
-    res.write( (((totalspace/1024)/1024)/1024).toFixed(2) + ' Gb total<br />' + ((totalspace-freespace)/1024/1024/1024).toFixed(2) + ' Gb used<br /> ' + (((freespace/1024)/1024)/1024).toFixed(2) + ' Gb free<br />\n');
-
-    res.write('<b>Share: </b>');
-    if(!ip){
-      	res.write('<i>Press Refresh button</i>');
-    }else if (ip){
-      	res.write('smb://');
-      	res.write(ip);
-      	res.write('/' + share + '<br />\n');
-    }
-    //res.write('<b>Connected user:</b>');
-
-    res.write('<form method="post" action="/admin">\n');
-    res.write('<button class="bottone">Refresh</button>\n');
-		res.write('</form></div>\n');
-
-    var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
+    	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   	var line = etcpasswd.split("\n");
   	for (i = 0; i < line.length; i++) {
   		if(line[i].indexOf('NASsiolus user')  >= 0 ){
@@ -404,12 +415,12 @@ app.post('/admin', function (req, res, next){
 
 	res.write('</div>\n');
 	}else if(!sess.login == true){
-    res.write('<div class="box">\n');
-    res.write('Wrong password.<br />');
-    res.write('<form action="/logout" method="post">\n');
-    res.write('<button class="bottone" >Back</button>\n');
-    res.write('</form>\n');
-    res.write('</div>');
+    		res.write('<div class="box">\n');
+    		res.write('Wrong password.<br />');
+    		res.write('<form action="/logout" method="post">\n');
+    		res.write('<button class="bottone" >Back</button>\n');
+    		res.write('</form>\n');
+    		res.write('</div>');
 	}
 	res.end(footerhtml);
 });
