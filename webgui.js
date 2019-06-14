@@ -12,6 +12,7 @@ var crypto = require('crypto');
 var checkDiskSpace = require('check-disk-space');
 var split = require('split');
 var exec = require('child_process').exec;
+var arraySort = require('array-sort');
 
 var port = "11235";
 var freespace = new String();
@@ -24,6 +25,7 @@ var ip;
 var netmask;
 var gateway;
 var sess;
+var smblog = new Array();
 
 app.use(expressSanitizer());
 app.use(session({
@@ -354,7 +356,17 @@ app.post('/logout', function (req, res) {
       		res.write(ip);
       		res.write('/' + share + '<br />\n');
     	}
-    	//res.write('<b>Connected user:</b>');
+    	res.write('<b>Last connection:</b>');
+      fs.readdir("/var/log/samba/", function(err, items) {
+        for (var i=0; i<items.length-1; i++) {
+          smblog[fs.statSync("/var/log/samba/" + items[i]).mtime.getTime()] = items[i];
+        }
+        console.log(smblog);
+        console.log(arraySort(smblog, 0));
+
+      });
+
+
 
     	res.write('<form method="post" action="/admin">\n');
     	res.write('<button class="bottone">Refresh</button>\n');

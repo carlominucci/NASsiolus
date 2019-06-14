@@ -4,6 +4,7 @@
   "description": "A simple and very minimal NAS. With only one user and only one share.",
   "main": "webgui.js",
   "dependencies": {
+    "array-sort": "^1.0.0",
     "body-parser": "^1.19.0",
     "check-disk-space": "^1.5.0",
     "child_process": "^1.0.2",
@@ -12,7 +13,7 @@
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "express-sanitizer": "^1.0.5",
-    "express-session": "^1.16.1",
+    "express-session": "^1.16.2",
     "fs": "0.0.1-security",
     "network-config": "^2.0.0",
     "os": "^0.1.1",
