@@ -25,7 +25,7 @@ var ip;
 var netmask;
 var gateway;
 var sess;
-var smblog = new Array();
+var smblog;
 
 app.use(expressSanitizer());
 app.use(session({
@@ -92,11 +92,11 @@ app.get('/', function (req, res) {
 	res.write(headerhtml);
 	res.write('<div class="box">\n');
 	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1><br />\n');
-  	res.write('smb://' + ip + '/' + share + '<br /><br />');
-  	res.write('Password:<br /><form action="admin" method="post">');
-  	res.write('<input type="password" name="password" />\n');
-  	res.write('<button class="bottone">Login</button>\n');
-  	res.write('</form>\n');
+  res.write('smb://' + ip + '/' + share + '<br /><br />');
+  res.write('Password:<br /><form action="admin" method="post">');
+  res.write('<input type="password" name="password" />\n');
+  res.write('<button class="bottone">Login</button>\n');
+  res.write('</form>\n');
 	res.write('</div>\n');
 	res.end(footerhtml);
 });
@@ -214,19 +214,19 @@ app.get('/saveshare', function(req, res){
 	exec("hostname -F /etc/hostname");
 
 	res.set('Content-Type', 'text/html');
-  	res.write(headerhtml)
-  	res.write('<div class="box">\n');
+  res.write(headerhtml)
+  res.write('<div class="box">\n');
 	res.write(writesaved);
-  	res.write('</div>');
-  	res.end(footerhtml);
+  res.write('</div>');
+  res.end(footerhtml);
 });
 
 app.post('/upgrade', function(req, res){
 	exec("apk update && apk upgrade; npm update",
     	function (error, stdout, stderr) {
       		res.set('Content-Type', 'text/html');
-   	 	res.write(headerhtml);
-  		res.write('<div class="boxupdate">\n');
+   	 	    res.write(headerhtml);
+  		    res.write('<div class="boxupdate">\n');
       		res.write('<h1>Update</h1>\n')
       		res.write('<pre>\n');
       		res.write(stdout);
@@ -245,7 +245,7 @@ app.post('/poweroff', function(req, res){
   	res.write('Poweroff in progress..');
   	res.write('</div>');
   	res.end(footerhtml);
-	poweroff(function(output){
+	  poweroff(function(output){
 		console.log("PowerOff");
 	});
 });
@@ -357,14 +357,30 @@ app.post('/logout', function (req, res) {
       		res.write('/' + share + '<br />\n');
     	}
     	res.write('<b>Last connection:</b>');
-      fs.readdir("/var/log/samba/", function(err, items) {
+      /*fs.readdir("/var/log/samba/", function(err, items) {
         for (var i=0; i<items.length-1; i++) {
           smblog[fs.statSync("/var/log/samba/" + items[i]).mtime.getTime()] = items[i];
         }
         console.log(smblog);
-        console.log(arraySort(smblog, 0));
+      });*/
 
+      const { spawn } = require('child_process');
+      const ls = spawn('ls', ['-t', '/var/log/samba/']);
+
+      ls.stdout.on('data', (data) => {
+
+
+        //console.log(data.toString());
+        if(data.toString() != "cores\n"){
+          console.log("--");
+        }else{
+          smblog += data.toString();
+        }
+        //console.log(smblog);
+        console.log(smblog);
       });
+      //console.log(smblog);
+
 
 
 
@@ -372,7 +388,7 @@ app.post('/logout', function (req, res) {
     	res.write('<button class="bottone">Refresh</button>\n');
 	res.write('</form></div>\n');
 
-    	var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
+    var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   	var line = etcpasswd.split("\n");
   	for (i = 0; i < line.length; i++) {
   		if(line[i].indexOf('NASsiolus user')  >= 0 ){
