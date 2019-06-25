@@ -25,7 +25,7 @@ var ip;
 var netmask;
 var gateway;
 var sess;
-var smblog;
+var smblog = new String();
 
 app.use(expressSanitizer());
 app.use(session({
@@ -353,40 +353,34 @@ app.post('/logout', function (req, res) {
       		res.write('<i>Press Refresh button</i>');
     	}else if (ip){
       		res.write('smb://');
+          console.log(typeof(ip));
       		res.write(ip);
       		res.write('/' + share + '<br />\n');
     	}
     	res.write('<b>Last connection:</b>');
-      /*fs.readdir("/var/log/samba/", function(err, items) {
-        for (var i=0; i<items.length-1; i++) {
-          smblog[fs.statSync("/var/log/samba/" + items[i]).mtime.getTime()] = items[i];
+
+      fs.readdir("/var/log/samba/", function(err, items) {
+        for (var i=0; i<items.length; i++) {
+          //console.log(items[i]);
+          if(items[i] == "cores"){
+          }else if(items[i] == "log.nmbd"){
+          }else if(items[i] == "log.smbd"){
+          }else if(items[i] == "log.smbd.old"){
+          }else if(items[i] == "log."){
+          }else{
+            var line = items[i].split("log.");
+            console.log(line[1] + "<br />\n");
+            res.write(line[1]);
+            console.log(typeof(line[1]));
+            //smblog += line[1].toString() + "<br />\n";
+          }
         }
-        console.log(smblog);
-      });*/
-
-      const { spawn } = require('child_process');
-      const ls = spawn('ls', ['-t', '/var/log/samba/']);
-
-      ls.stdout.on('data', (data) => {
-
-
-        //console.log(data.toString());
-        if(data.toString() != "cores\n"){
-          console.log("--");
-        }else{
-          smblog += data.toString();
-        }
-        //console.log(smblog);
-        console.log(smblog);
       });
-      //console.log(smblog);
 
-
-
-
+      //res.write(smblog);
     	res.write('<form method="post" action="/admin">\n');
     	res.write('<button class="bottone">Refresh</button>\n');
-	res.write('</form></div>\n');
+	  res.write('</form></div>\n');
 
     var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
   	var line = etcpasswd.split("\n");
@@ -398,7 +392,7 @@ app.post('/logout', function (req, res) {
   	}
 
 	res.write('<div class="box">\n');
-    	res.write('<h1>Login parameters</h1><br />\n');
+  res.write('<h1>Login parameters</h1><br />\n');
 	res.write('<form action="newusername" method="get">\n');
 	res.write('Username:<br /><input type="text" name="username" value="' + username + '" size="20" /><br />\n');
 	res.write('Password:<br /><input type="password" name="password" size="20" /><br />\n');
@@ -407,7 +401,7 @@ app.post('/logout', function (req, res) {
 	res.write('</div>\n');
 
 	res.write('<div class="box" >\n');
-    	res.write('<h1><i>WorkGroup</i> and <i>Share</i></h1><br />\n');
+  res.write('<h1><i>WorkGroup</i> and <i>Share</i></h1><br />\n');
 	res.write('<form action="saveshare" method="get">\n');
 	res.write('Workgroup:<br /><input type="text" name="workgroup" value="' + workgroup + '" /><br />\n');
 	res.write('Share:<br /><input type="text" name="share" value="' + share + '" /><br />\n');
@@ -416,16 +410,16 @@ app.post('/logout', function (req, res) {
 	res.write('</form>\n</div>\n');
 
 	res.write('<div class="box">\n');
-    	res.write('<h1>System</h1><br />\n');
-    	res.write('Change <i>webgui</i> password.<br />\n');
-    	res.write('<form action="changepwd" method="get" >\n');
-   	res.write('Old Password:<br /><input type="password" name="oldpassword" />\n');
-    	res.write('New Password:<br /><input type="password" name="newpassword" />\n');
-    	res.write('<input class="bottone" type="submit" value="Save" />\n');
-    	res.write('</form>\n');
-    	res.write('<hr />\n');
+  res.write('<h1>System</h1><br />\n');
+  res.write('Change <i>webgui</i> password.<br />\n');
+  res.write('<form action="changepwd" method="get" >\n');
+  res.write('Old Password:<br /><input type="password" name="oldpassword" />\n');
+  res.write('New Password:<br /><input type="password" name="newpassword" />\n');
+  res.write('<input class="bottone" type="submit" value="Save" />\n');
+  res.write('</form>\n');
+  res.write('<hr />\n');
 
-    	res.write('<form action="logout" method="post">\n');
+  res.write('<form action="logout" method="post">\n');
 	res.write('<button class="bottone">Logout</button>\n');
 	res.write('</form>\n');
 
