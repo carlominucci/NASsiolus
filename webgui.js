@@ -1,6 +1,7 @@
 var express = require('express');
 var session = require('express-session');
 const expressSanitizer = require('express-sanitizer');
+var useragent = require('express-useragent');
 var fs = require('fs');
 var https = require('https');
 var app = express();
@@ -25,9 +26,10 @@ var ip;
 var netmask;
 var gateway;
 var sess;
-var smblog = new String();
+var smblog = new String();;
 
 app.use(expressSanitizer());
+
 app.use(session({
     secret: '2C44-4D44-WppQ38S',
     resave: true,
@@ -35,6 +37,7 @@ app.use(session({
 }));
 
 const headerhtml = fs.readFileSync("./header.html");
+const headermobile = fs.readFileSync("./mobile.html");
 const footerhtml = fs.readFileSync("./footer.html");
 var writesaved = headerhtml + '<div class="action">\n' + 'Saved.\n' + '<form action="/admin" method="post">\n' + '<button class="bottone" >Back</button>\n' + '</form>\n' + '</div>\n' + footerhtml;
 
@@ -48,6 +51,24 @@ function poweroff(callback){
 }
 function reboot(callback){
 	exec('reboot', function(error, stdout, stderr){ callback(stdout); });
+}
+
+function lastlogin(callback){
+  fs.readdir("/var/log/samba/", function(err, items) {
+    for (var i=0; i<items.length; i++) {
+      //console.log(items[i]);
+      if(items[i] == "cores"){
+      }else if(items[i] == "log.nmbd"){
+      }else if(items[i] == "log.smbd"){
+      }else if(items[i] == "log.smbd.old"){
+      }else if(items[i] == "log."){
+      }else{
+        var line = items[i].split("log.");
+        smblog += line[1].toString() + "<br />\n";
+      }
+    }
+    return;
+  });
 }
 
 function networkdata(callback){
@@ -84,17 +105,23 @@ function sambaitem(callback){
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(useragent.express());
 
 app.get('/', function (req, res) {
+  console.log(req.useragent.isMobile);
 	sambaitem();
 	//networkdata();
 	res.set('Content-Type', 'text/html');
-	res.write(headerhtml);
+  if(req.useragent.isMobile == false){
+    res.write(headerhtml);
+  }else if(req.useragent.isMobile == true){
+    res.write(headermobile);
+  }
 	res.write('<div class="box">\n');
 	res.write('<h1>NASsiolus - ' + os.hostname + ' </h1><br />\n');
   res.write('smb://' + ip + '/' + share + '<br /><br />');
   res.write('Password:<br /><form action="admin" method="post">');
-  res.write('<input type="password" name="password" />\n');
+  res.write('<input type="password" name="password" /><br />\n');
   res.write('<button class="bottone">Login</button>\n');
   res.write('</form>\n');
 	res.write('</div>\n');
@@ -270,9 +297,14 @@ app.post('/logout', function (req, res) {
 });
 
 	app.post('/admin', function (req, res, next){
-  	sess = req.session;
+  sess = req.session;
 	res.set('Content-Type', 'text/html');
-	res.write(headerhtml);
+  console.log(req.useragent.isMobile);
+  if(req.useragent.isMobile == false){
+    res.write(headerhtml);
+  }else if(req.useragent.isMobile == true){
+    res.write(headermobile);
+  }
 
 	if(req.body.password){
 		var password=req.sanitize(req.body.password);
@@ -353,33 +385,17 @@ app.post('/logout', function (req, res) {
       		res.write('<i>Press Refresh button</i>');
     	}else if (ip){
       		res.write('smb://');
-          console.log(typeof(ip));
       		res.write(ip);
       		res.write('/' + share + '<br />\n');
     	}
-    	res.write('<b>Last connection:</b>');
+    	res.write('<b>Last connection:</b><br />\n');
 
-      fs.readdir("/var/log/samba/", function(err, items) {
-        for (var i=0; i<items.length; i++) {
-          //console.log(items[i]);
-          if(items[i] == "cores"){
-          }else if(items[i] == "log.nmbd"){
-          }else if(items[i] == "log.smbd"){
-          }else if(items[i] == "log.smbd.old"){
-          }else if(items[i] == "log."){
-          }else{
-            var line = items[i].split("log.");
-            console.log(line[1] + "<br />\n");
-            res.write(line[1]);
-            console.log(typeof(line[1]));
-            //smblog += line[1].toString() + "<br />\n";
-          }
-        }
-      });
+    lastlogin();
+    res.write(smblog.toString());
+    smblog="";
 
-      //res.write(smblog);
-    	res.write('<form method="post" action="/admin">\n');
-    	res.write('<button class="bottone">Refresh</button>\n');
+    res.write('<form method="post" action="/admin">\n');
+    res.write('<button class="bottone">Refresh</button>\n');
 	  res.write('</form></div>\n');
 
     var etcpasswd = fs.readFileSync('/etc/passwd', 'utf8');
