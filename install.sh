@@ -6,7 +6,7 @@ echo "* Creating certificate...          *"
 echo "************************************"
 echo
 mkdir /srv/NASsiolus
-openssl genrsa -out /srv/NASsiolus/privatekey.pem 1024
+openssl genrsa -out /srv/NASsiolus/privatekey.pem 2048 
 openssl req -new -key /srv/NASsiolus/privatekey.pem -out /srv/NASsiolus/certrequest.csr
 openssl x509 -req -in /srv/NASsiolus/certrequest.csr -signkey /srv/NASsiolus/privatekey.pem -out /srv/NASsiolus/certificate.pem
 
