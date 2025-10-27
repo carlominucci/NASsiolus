@@ -13,7 +13,7 @@ A simple and very minimal NAS. With only one user and only one share.
 
 Follow the instruction for create SSL certificate.
 
-Open https://*IP.ADDRESS*:12345
+Open https://*IP.ADDRESS*:11235
 
 Default password is *password*.
 
@@ -32,9 +32,5 @@ You can also logout, reboot, e poweroff the system.
 
 email: gecco@napodano.com
 [website](https://minucci.net "minucci.net")
-
-[facebook](https://www.facebook.com/gecco "facebook")
-
-[twitter](https://twitter.com/gecco "twitter")
 
 [github](https://github.com/carlominucci "github")
